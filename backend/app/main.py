@@ -2,6 +2,7 @@ from io import BytesIO
 from typing import Annotated
 
 from fastapi import Depends, FastAPI, File, HTTPException, UploadFile, status
+from fastapi.middleware.cors import CORSMiddleware
 from PIL import Image, UnidentifiedImageError
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
@@ -15,6 +16,13 @@ from app.services.classifier import classify_image
 app = FastAPI(
     title="EcoVision API",
     version="0.1.0",
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origin_regex=r"https?://(localhost|127\.0\.0\.1)(:\d+)?",
+    allow_methods=["POST"],
+    allow_headers=["*"],
 )
 
 

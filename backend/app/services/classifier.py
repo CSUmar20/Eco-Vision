@@ -1,7 +1,9 @@
 from functools import lru_cache
+from io import BytesIO
 from typing import Any
+from urllib import request as urllib_request
 
-from PIL import Image, ImageOps
+from PIL import Image, ImageOps, UnidentifiedImageError
 from transformers import pipeline
 
 from app.config import settings
@@ -33,8 +35,17 @@ def get_classifier() -> Any:
     )
 
 
-def classify_image(image: Image.Image) -> list[dict[str, str | float]]:
-    prepared_image = ImageOps.exif_transpose(image).convert("RGB")
+def classify_image(image: Image.Image | str) -> list[dict[str, str | float]]:
+    if isinstance(image, str):
+        with urllib_request.urlopen(image) as response:
+            image_bytes = response.read()
+
+        image = Image.open(BytesIO(image_bytes))
+
+    try:
+        prepared_image = ImageOps.exif_transpose(image).convert("RGB")
+    except (UnidentifiedImageError, OSError) as error:
+        raise ValueError("The provided image is not a valid image file.") from error
 
     raw_predictions = get_classifier()(
         prepared_image,
