@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 380" role="img" aria-labelledby="title description">
+  <title id="title">Sage green geometric leaf</title>
+  <desc id="description">A pointed leaf assembled from outlined hexagonal cells.</desc>
+  <defs>
+    <linearGradient id="leafFill" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#dce8d7" />
+      <stop offset="1" stop-color="#8fac91" />
+    </linearGradient>
+  </defs>
+  <g stroke="#345c43" stroke-width="7" stroke-linejoin="miter">
+    <polygon points="160,18 200,42 200,90 160,114 120,90 120,42" fill="#c9dcc5" />
+    <polygon points="112,86 152,110 152,158 112,182 72,158 72,110" fill="#b8cfb5" />
+    <polygon points="208,86 248,110 248,158 208,182 168,158 168,110" fill="#9fbea2" />
+    <polygon points="64,154 104,178 104,226 64,250 24,226 24,178" fill="#cfdfca" />
+    <polygon points="160,154 200,178 200,226 160,250 120,226 120,178" fill="url(#leafFill)" />
+    <polygon points="256,154 296,178 296,226 256,250 216,226 216,178" fill="#88aa8e" />
+    <polygon points="112,222 152,246 152,294 112,318 72,294 72,246" fill="#adc6ad" />
+    <polygon points="208,222 248,246 248,294 208,318 168,294 168,246" fill="#769c80" />
+    <polygon points="160,290 200,314 200,342 160,366 120,342 120,314" fill="#668d72" />
+  </g>
+  <path d="M160 78V342" fill="none" stroke="#345c43" stroke-width="8" stroke-linecap="square" />
+</svg>

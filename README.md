@@ -18,6 +18,7 @@ The current vertical slice can:
 - Classify the image using a configurable Hugging Face zero-shot image model.
 - Display the top prediction, confidence, and alternative predictions.
 - Save the scan and its predictions in PostgreSQL.
+- Let a guest confirm the top prediction or select one of the returned alternatives.
 - Preserve the selected image and allow the user to retry after an error.
 
 The MVP does **not** yet determine whether the item is accepted by a local recycling program. API responses explicitly report `local_rules_not_checked` until verified local-rule data is implemented.
@@ -239,6 +240,11 @@ Successful responses contain:
 - Up to four alternative predictions
 - `disposal_status: "local_rules_not_checked"`
 
+### `PATCH /scans/{scan_id}/confirmation`
+
+Accepts one of the labels returned for the referenced scan and saves it as anonymous model
+feedback. Labels that were not part of that scan's predictions are rejected.
+
 ## Quality checks
 
 Run backend checks from `backend/`:
@@ -265,7 +271,7 @@ npx tsc --noEmit
 - Inference currently runs synchronously inside the API request.
 - Local recycling rules, municipality selection, official rule sources, and rule freshness checks are not implemented yet.
 - The application must not claim an item is locally accepted until an applicable rule has been verified.
-- User correction and saved scan-history interfaces are not implemented yet.
+- A saved scan-history interface is not implemented yet.
 - The health endpoint does not check PostgreSQL connectivity or model readiness.
 - Browser access from another LAN device may require additional development CORS configuration.
 

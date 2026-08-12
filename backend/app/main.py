@@ -1,5 +1,6 @@
 from io import BytesIO
 from typing import Annotated
+from uuid import UUID
 
 from fastapi import Depends, FastAPI, File, HTTPException, UploadFile, status
 from fastapi.middleware.cors import CORSMiddleware
@@ -10,7 +11,12 @@ from sqlalchemy.orm import Session
 from app.config import settings
 from app.database import get_database_session
 from app.models import Scan
-from app.schemas import PredictionResponse, ScanResponse
+from app.schemas import (
+    PredictionResponse,
+    ScanConfirmationRequest,
+    ScanConfirmationResponse,
+    ScanResponse,
+)
 from app.services.classifier import classify_image
 
 app = FastAPI(
@@ -21,7 +27,7 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origin_regex=r"https?://(localhost|127\.0\.0\.1)(:\d+)?",
-    allow_methods=["POST"],
+    allow_methods=["POST", "PATCH"],
     allow_headers=["*"],
 )
 
@@ -129,4 +135,52 @@ def classify_uploaded_image(
             )
             for prediction in predictions[1:5]
         ],
+    )
+
+
+@app.patch(
+    "/scans/{scan_id}/confirmation",
+    response_model=ScanConfirmationResponse,
+)
+def confirm_scan_prediction(
+    scan_id: UUID,
+    confirmation: ScanConfirmationRequest,
+    database: DatabaseSession,
+) -> ScanConfirmationResponse:
+    scan = database.get(Scan, scan_id)
+
+    if scan is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="The scan could not be found.",
+        )
+
+    confirmed_label = confirmation.confirmed_label.strip()
+    prediction_labels = {
+        str(prediction["label"])
+        for prediction in scan.predictions
+        if isinstance(prediction, dict) and "label" in prediction
+    }
+
+    if confirmed_label not in prediction_labels:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail="The confirmed label must be one of the scan predictions.",
+        )
+
+    scan.confirmed_label = confirmed_label
+
+    try:
+        database.commit()
+    except SQLAlchemyError as error:
+        database.rollback()
+
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="The scan confirmation could not be saved.",
+        ) from error
+
+    return ScanConfirmationResponse(
+        scan_id=scan.id,
+        confirmed_label=scan.confirmed_label,
     )

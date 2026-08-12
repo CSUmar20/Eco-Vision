@@ -17,3 +17,12 @@ class ScanResponse(BaseModel):
     top_prediction: PredictionResponse
     alternatives: list[PredictionResponse]
     disposal_status: Literal["local_rules_not_checked"] = "local_rules_not_checked"
+
+
+class ScanConfirmationRequest(BaseModel):
+    confirmed_label: str = Field(min_length=1, max_length=255)
+
+
+class ScanConfirmationResponse(BaseModel):
+    scan_id: UUID
+    confirmed_label: str

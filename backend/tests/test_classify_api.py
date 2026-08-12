@@ -50,6 +50,12 @@ class FakeDatabaseSession:
         scan.id = uuid4()
         scan.created_at = datetime(2026, 8, 11, tzinfo=UTC)
 
+    def get(self, model: type[Scan], scan_id: UUID) -> Scan | None:
+        if self.added_scan is not None and self.added_scan.id == scan_id:
+            return self.added_scan
+
+        return None
+
     def rollback(self) -> None:
         self.rollback_called = True
 
@@ -193,3 +199,60 @@ def test_database_failure_rolls_back_and_returns_500(
     assert database.commit_called
     assert database.rollback_called
     assert not database.refresh_called
+
+
+def test_scan_prediction_can_be_confirmed(
+    api_context: tuple[TestClient, FakeDatabaseSession, ClassifierStub],
+    png_image_bytes: bytes,
+) -> None:
+    client, database, _ = api_context
+    scan_response = upload(client, png_image_bytes)
+    confirmed_label = PREDICTIONS[1]["label"]
+
+    response = client.patch(
+        f"/scans/{scan_response.json()['scan_id']}/confirmation",
+        json={"confirmed_label": confirmed_label},
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "scan_id": scan_response.json()["scan_id"],
+        "confirmed_label": confirmed_label,
+    }
+    assert database.added_scan is not None
+    assert database.added_scan.confirmed_label == confirmed_label
+
+
+def test_confirmation_rejects_label_outside_scan_predictions(
+    api_context: tuple[TestClient, FakeDatabaseSession, ClassifierStub],
+    png_image_bytes: bytes,
+) -> None:
+    client, database, _ = api_context
+    scan_response = upload(client, png_image_bytes)
+
+    response = client.patch(
+        f"/scans/{scan_response.json()['scan_id']}/confirmation",
+        json={"confirmed_label": "a label supplied by the client"},
+    )
+
+    assert response.status_code == 422
+    assert (
+        response.json()["detail"]
+        == "The confirmed label must be one of the scan predictions."
+    )
+    assert database.added_scan is not None
+    assert database.added_scan.confirmed_label is None
+
+
+def test_confirmation_returns_404_for_unknown_scan(
+    api_context: tuple[TestClient, FakeDatabaseSession, ClassifierStub],
+) -> None:
+    client, _, _ = api_context
+
+    response = client.patch(
+        f"/scans/{uuid4()}/confirmation",
+        json={"confirmed_label": PREDICTIONS[0]["label"]},
+    )
+
+    assert response.status_code == 404
+    assert response.json()["detail"] == "The scan could not be found."
