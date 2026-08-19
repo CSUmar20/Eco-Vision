@@ -184,6 +184,48 @@ def test_prediction_is_saved(
     assert not database.rollback_called
 
 
+def test_selected_jurisdiction_is_saved_with_scan(
+    api_context: tuple[TestClient, FakeDatabaseSession, ClassifierStub],
+    png_image_bytes: bytes,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    client, database, classifier = api_context
+    jurisdiction_id = uuid4()
+    monkeypatch.setattr(main, "get_jurisdiction", lambda session, identifier: object())
+
+    response = client.post(
+        "/classify",
+        data={"jurisdiction_id": str(jurisdiction_id)},
+        files={"file": ("item.png", png_image_bytes, "image/png")},
+    )
+
+    assert response.status_code == 201
+    assert response.json()["jurisdiction_id"] == str(jurisdiction_id)
+    assert database.added_scan is not None
+    assert database.added_scan.jurisdiction_id == jurisdiction_id
+    assert classifier.call_count == 1
+
+
+def test_unknown_jurisdiction_is_rejected_before_classification(
+    api_context: tuple[TestClient, FakeDatabaseSession, ClassifierStub],
+    png_image_bytes: bytes,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    client, database, classifier = api_context
+    monkeypatch.setattr(main, "get_jurisdiction", lambda session, identifier: None)
+
+    response = client.post(
+        "/classify",
+        data={"jurisdiction_id": str(uuid4())},
+        files={"file": ("item.png", png_image_bytes, "image/png")},
+    )
+
+    assert response.status_code == 422
+    assert response.json()["detail"] == "Select an active recycling jurisdiction."
+    assert database.added_scan is None
+    assert classifier.call_count == 0
+
+
 def test_database_failure_rolls_back_and_returns_500(
     api_context: tuple[TestClient, FakeDatabaseSession, ClassifierStub],
     png_image_bytes: bytes,

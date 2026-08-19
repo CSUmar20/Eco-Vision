@@ -83,7 +83,7 @@ compose.yaml           Local PostgreSQL service
 - Docker Desktop or another Docker-compatible runtime
 - Xcode with an iOS Simulator for iOS development
 
-The project currently targets Expo SDK 57. The installed Expo Go version must support the project's SDK. When the App Store version does not match, use an iOS Simulator or an Expo development build instead of downgrading the project.
+The project currently targets Expo SDK 57 and uses an iOS Simulator-only development workflow. This avoids the Expo Go SDK mismatch on a physical phone and does not require a paid Apple Developer account.
 
 ## Initial setup
 
@@ -105,12 +105,11 @@ pip install -r requirements-lock.txt
 cd ..
 ```
 
-Install mobile dependencies and create its local environment file:
+Install mobile dependencies:
 
 ```bash
 cd mobile
 npm install
-cp .env.example .env.local
 cd ..
 ```
 
@@ -173,6 +172,9 @@ Expected response:
 {"status":"ok"}
 ```
 
+Do not open the mobile app until this health check succeeds. If `curl` cannot connect,
+the simulator will also report that it cannot reach the EcoVision API.
+
 Interactive API documentation is available at `http://127.0.0.1:8000/docs`.
 
 ### 4. Expo
@@ -180,20 +182,7 @@ Interactive API documentation is available at `http://127.0.0.1:8000/docs`.
 From `mobile/`:
 
 ```bash
-npx expo start --clear
-```
-
-Common targets:
-
-```bash
-# iOS Simulator
-npx expo start --ios
-
-# Android Emulator
-npx expo start --android
-
-# Web
-npx expo start --web
+npm run ios
 ```
 
 The iOS Simulator has no real camera hardware. Add a JPEG or PNG to the simulated photo library and use **Choose from library** when testing the scan flow.
@@ -211,16 +200,13 @@ The iOS Simulator has no real camera hardware. Add a JPEG or PNG to the simulate
 | `HF_MODEL` | Hugging Face model identifier | `openai/clip-vit-base-patch32` |
 | `MAX_IMAGE_BYTES` | Maximum accepted upload size | `10000000` |
 
-### Mobile: `mobile/.env.local`
+### Mobile API address
 
-| Environment | `EXPO_PUBLIC_API_URL` |
-| --- | --- |
-| iOS Simulator | `http://127.0.0.1:8000` |
-| Web on the development Mac | `http://127.0.0.1:8000` |
-| Android Emulator | `http://10.0.2.2:8000` |
-| Physical device | `http://<MAC_LAN_IP>:8000` |
-
-When testing from a physical device, start FastAPI with `--host 0.0.0.0`, keep the device and Mac on the same network, and never commit the machine-specific `.env.local` file. Restart Expo after changing an `EXPO_PUBLIC_` variable.
+The current iOS Simulator build always connects to `http://localhost:8000`. The
+simulator shares the Mac's loopback interface, so FastAPI can remain bound to
+`127.0.0.1`. Using the `localhost` hostname also matches the iOS local-network
+transport exception without enabling insecure HTTP globally. A mobile environment
+file is not used in this simulator-only workflow.
 
 ## API
 
@@ -228,9 +214,23 @@ When testing from a physical device, start FastAPI with `--host 0.0.0.0`, keep t
 
 Returns a basic process health response. It does not currently verify database or model availability.
 
+### `GET /jurisdictions`
+
+Searches active recycling jurisdictions by city, display name, state, county, waste provider, or
+postal-code prefix. The required `query` parameter accepts 2–100 characters, and `limit` accepts
+1–20 results. A postal code can return multiple jurisdictions because ZIP boundaries do not
+reliably match municipal or county boundaries; the mobile app must let the user confirm one.
+
+### `GET /jurisdictions/{jurisdiction_id}/rules`
+
+Returns the jurisdiction and its source-backed disposal rules. Every stored rule includes a stable
+material key, disposal status, official source title and URL, and verification timestamp. When no
+rules have been curated, the endpoint returns `coverage_status: "unavailable"` and an empty list.
+
 ### `POST /classify`
 
-Accepts one multipart form field named `file`. Supported media types are JPEG, PNG, and WebP.
+Accepts a multipart image field named `file` and an optional `jurisdiction_id`. Supported media
+types are JPEG, PNG, and WebP. Unknown or inactive jurisdictions are rejected before inference.
 
 Successful responses contain:
 
@@ -269,7 +269,8 @@ npx tsc --noEmit
 - Model quality has not yet been measured against a representative waste-item image set.
 - The first real classification may be slow while the Hugging Face model is loaded or downloaded.
 - Inference currently runs synchronously inside the API request.
-- Local recycling rules, municipality selection, official rule sources, and rule freshness checks are not implemented yet.
+- The jurisdiction and rule schema exists, but no production jurisdiction dataset has been curated
+  and the mobile location screen is not connected to the search endpoints yet.
 - The application must not claim an item is locally accepted until an applicable rule has been verified.
 - A saved scan-history interface is not implemented yet.
 - The health endpoint does not check PostgreSQL connectivity or model readiness.

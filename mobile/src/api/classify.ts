@@ -1,3 +1,4 @@
+import { File, UploadType } from 'expo-file-system';
 import type { ImagePickerAsset } from 'expo-image-picker';
 
 import { API_BASE_URL } from '@/config/api';
@@ -25,6 +26,11 @@ type ApiErrorBody = {
   detail?: unknown;
 };
 
+type NativeUploadResult = {
+  body: string;
+  status: number;
+};
+
 function getFileName(asset: ImagePickerAsset): string {
   if (asset.fileName) {
     return asset.fileName;
@@ -47,20 +53,66 @@ async function getErrorMessage(response: Response, fallback: string): Promise<st
   return fallback;
 }
 
+function getNativeErrorMessage(result: NativeUploadResult, fallback: string): string {
+  try {
+    const body = JSON.parse(result.body) as ApiErrorBody;
+    if (typeof body.detail === 'string' && body.detail) {
+      return body.detail;
+    }
+  } catch {
+    // Keep the fallback when the server does not return JSON.
+  }
+
+  return fallback;
+}
+
+function parseNativeScanResult(result: NativeUploadResult): ScanResult {
+  try {
+    return JSON.parse(result.body) as ScanResult;
+  } catch {
+    throw new Error('The EcoVision API returned an invalid scan response.');
+  }
+}
+
+async function uploadNativeImage(asset: ImagePickerAsset): Promise<ScanResult> {
+  const file = new File(asset.uri);
+
+  if (!file.exists) {
+    throw new Error('The selected image is no longer available. Please choose it again.');
+  }
+
+  let result: NativeUploadResult;
+
+  try {
+    result = await file.upload(`${API_BASE_URL}/classify`, {
+      fieldName: 'file',
+      httpMethod: 'POST',
+      mimeType: asset.mimeType || file.type || 'image/jpeg',
+      sessionType: 'foreground',
+      uploadType: UploadType.MULTIPART,
+    });
+  } catch (error) {
+    const reason = error instanceof Error && error.message ? ` ${error.message}` : '';
+    throw new Error(`The selected image could not be uploaded.${reason}`);
+  }
+
+  if (result.status < 200 || result.status >= 300) {
+    throw new Error(
+      getNativeErrorMessage(result, `The scan failed with status ${result.status}.`),
+    );
+  }
+
+  return parseNativeScanResult(result);
+}
+
 export async function classifyImage(asset: ImagePickerAsset): Promise<ScanResult> {
+  if (!asset.file) {
+    return uploadNativeImage(asset);
+  }
+
   const formData = new FormData();
 
-  if (asset.file) {
-    formData.append('file', asset.file, getFileName(asset));
-  } else {
-    const nativeFile = {
-      uri: asset.uri,
-      name: getFileName(asset),
-      type: asset.mimeType || 'image/jpeg',
-    };
-
-    formData.append('file', nativeFile as unknown as Blob);
-  }
+  formData.append('file', asset.file, getFileName(asset));
 
   let response: Response;
 
