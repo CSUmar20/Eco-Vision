@@ -71,7 +71,6 @@ mobile/
   src/app/             Expo Router screens
   src/api/             Typed backend client
   src/config/          Mobile runtime configuration
-  .env.example         Mobile environment template
 
 compose.yaml           Local PostgreSQL service
 ```
