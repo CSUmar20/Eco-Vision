@@ -33,6 +33,140 @@ DISPOSAL_STATUSES = (
     "unavailable_or_unclear",
 )
 
+GENERAL_DISPOSAL_ACTIONS = (
+    "reuse_or_donate",
+    "recycle",
+    "compost",
+    "special_drop_off",
+    "trash",
+    "check_locally",
+)
+
+
+class Material(Base):
+    __tablename__ = "materials"
+    __table_args__ = (
+        UniqueConstraint("key", name="uq_materials_key"),
+        Index("ix_materials_display_name", "display_name"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid.uuid4,
+    )
+    key: Mapped[str] = mapped_column(String(64), nullable=False)
+    display_name: Mapped[str] = mapped_column(String(150), nullable=False)
+    category: Mapped[str] = mapped_column(String(64), nullable=False)
+    active: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        server_default="true",
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+        onupdate=func.now(),
+    )
+
+    aliases: Mapped[list["MaterialAlias"]] = relationship(
+        back_populates="material",
+        cascade="all, delete-orphan",
+        order_by="MaterialAlias.normalized_alias",
+    )
+    general_disposal_rules: Mapped[list["GeneralDisposalRule"]] = relationship(
+        back_populates="material",
+        cascade="all, delete-orphan",
+        order_by="GeneralDisposalRule.country_code",
+    )
+
+
+class MaterialAlias(Base):
+    __tablename__ = "material_aliases"
+    __table_args__ = (
+        UniqueConstraint(
+            "normalized_alias",
+            name="uq_material_aliases_normalized_alias",
+        ),
+        Index("ix_material_aliases_material_id", "material_id"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid.uuid4,
+    )
+    material_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("materials.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    alias: Mapped[str] = mapped_column(String(150), nullable=False)
+    normalized_alias: Mapped[str] = mapped_column(String(150), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+    )
+
+    material: Mapped[Material] = relationship(back_populates="aliases")
+
+
+class GeneralDisposalRule(Base):
+    __tablename__ = "general_disposal_rules"
+    __table_args__ = (
+        CheckConstraint(
+            f"action IN {GENERAL_DISPOSAL_ACTIONS}",
+            name="ck_general_disposal_rules_action",
+        ),
+        UniqueConstraint(
+            "material_id",
+            "country_code",
+            name="uq_general_disposal_rules_material_country",
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid.uuid4,
+    )
+    material_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("materials.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    country_code: Mapped[str] = mapped_column(String(2), nullable=False)
+    action: Mapped[str] = mapped_column(String(32), nullable=False)
+    headline: Mapped[str] = mapped_column(String(255), nullable=False)
+    instructions: Mapped[str] = mapped_column(Text, nullable=False)
+    preparation: Mapped[str | None] = mapped_column(Text, nullable=True)
+    warning: Mapped[str | None] = mapped_column(Text, nullable=True)
+    source_title: Mapped[str] = mapped_column(String(255), nullable=False)
+    source_url: Mapped[str] = mapped_column(Text, nullable=False)
+    verified_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+        onupdate=func.now(),
+    )
+
+    material: Mapped[Material] = relationship(back_populates="general_disposal_rules")
+
 
 class Jurisdiction(Base):
     __tablename__ = "jurisdictions"
@@ -132,7 +266,9 @@ class DisposalRule(Base):
     instructions: Mapped[str | None] = mapped_column(Text, nullable=True)
     source_title: Mapped[str] = mapped_column(String(255), nullable=False)
     source_url: Mapped[str] = mapped_column(Text, nullable=False)
-    verified_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    verified_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,
