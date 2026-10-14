@@ -286,6 +286,7 @@ class DisposalRule(Base):
 
 class Scan(Base):
     __tablename__ = "scans"
+    __table_args__ = (Index("ix_scans_jurisdiction_id", "jurisdiction_id"),)
 
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
