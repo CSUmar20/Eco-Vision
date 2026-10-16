@@ -1,8 +1,12 @@
+from datetime import UTC, datetime
+from urllib.parse import urlparse
+
 from sqlalchemy import create_engine, func, select
 from sqlalchemy.orm import Session
 
 from app.material_catalog import MATERIAL_CATALOG
 from app.models import GeneralDisposalRule, Material, MaterialAlias
+from app.services.classifier import CANDIDATE_LABELS
 from app.services.materials import normalize_material_alias, seed_material_catalog
 
 
@@ -34,6 +38,32 @@ def test_seed_catalog_matches_classifier_materials_and_is_idempotent() -> None:
         ) == len(MATERIAL_CATALOG)
 
 
+def test_catalog_contains_selected_household_materials() -> None:
+    assert len(MATERIAL_CATALOG) == 25
+    assert len(CANDIDATE_LABELS) == 26
+    assert CANDIDATE_LABELS[-1] == "another type of household object"
+
+
+def test_every_general_rule_has_a_verified_authoritative_source() -> None:
+    authoritative_domains = {
+        "city.milwaukee.gov",
+        "recyclesmartma.org",
+        "www.epa.gov",
+        "www.fda.gov",
+        "www.stpaul.gov",
+        "zerowastesonoma.gov",
+    }
+
+    for entry in MATERIAL_CATALOG:
+        parsed_url = urlparse(entry.source_url)
+
+        assert entry.source_title.strip(), entry.key
+        assert parsed_url.scheme == "https", entry.key
+        assert parsed_url.hostname in authoritative_domains, entry.key
+        assert entry.verified_at.tzinfo is not None, entry.key
+        assert entry.verified_at <= datetime.now(UTC), entry.key
+
+
 def test_classifier_aliases_resolve_to_canonical_materials() -> None:
     expected_materials = {
         "an aluminum beverage can": "aluminum_beverage_can",
@@ -50,7 +80,22 @@ def test_classifier_aliases_resolve_to_canonical_materials() -> None:
         "an electronic device": "consumer_electronic_device",
         "clothing or textile": "reusable_clothing_or_textile",
         "mixed-material packaging": "mixed_material_packaging",
+        "adhesive tape": "adhesive_tape",
+        "aluminum foil or tray": "aluminum_foil_or_tray",
+        "a pizza box": "pizza_box",
+        "a disposable paper cup or takeout container": (
+            "paper_cup_or_takeout_container"
+        ),
+        "a food or beverage carton": "food_or_beverage_carton",
+        "a ceramic dish or drinking glass": "ceramic_dish_or_drinking_glass",
+        "a plastic utensil or straw": "plastic_utensil_or_straw",
+        "yard trimmings": "yard_trimmings",
+        "a CFL or fluorescent light bulb": "cfl_or_fluorescent_bulb",
+        "a paint or solvent container": "paint_or_solvent_container",
+        "a needle or medical sharp": "needle_or_medical_sharp",
     }
+
+    assert set(CANDIDATE_LABELS[:-1]) == set(expected_materials)
 
     with create_material_database() as database:
         seed_material_catalog(database)

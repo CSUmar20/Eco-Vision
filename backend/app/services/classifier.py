@@ -23,6 +23,17 @@ CANDIDATE_LABELS = [
     "an electronic device",
     "clothing or textile",
     "mixed-material packaging",
+    "adhesive tape",
+    "aluminum foil or tray",
+    "a pizza box",
+    "a disposable paper cup or takeout container",
+    "a food or beverage carton",
+    "a ceramic dish or drinking glass",
+    "a plastic utensil or straw",
+    "yard trimmings",
+    "a CFL or fluorescent light bulb",
+    "a paint or solvent container",
+    "a needle or medical sharp",
     "another type of household object",
 ]
 

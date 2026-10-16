@@ -23,11 +23,38 @@ EPA_COMMON_TITLE = "US EPA: How Do I Recycle Common Recyclables"
 EPA_COMMON_URL = "https://www.epa.gov/recycle/how-do-i-recycle-common-recyclables"
 EPA_COMPOST_TITLE = "US EPA: Composting at Home"
 EPA_COMPOST_URL = "https://www.epa.gov/recycle/composting-home"
-EPA_REUSE_TITLE = "US EPA: What You Can Do to Reduce Waste"
-EPA_REUSE_URL = "https://www.epa.gov/recycle/what-you-can-do"
+EPA_STANDARDIZED_TITLE = "US EPA: Standardized Terms for Municipal Recycling"
+EPA_STANDARDIZED_URL = (
+    "https://www.epa.gov/circulareconomy/"
+    "standardized-terms-materials-accepted-municipal-recycling-programs"
+)
+EPA_HHW_TITLE = "US EPA: Household Hazardous Waste"
+EPA_HHW_URL = "https://www.epa.gov/hw/household-hazardous-waste-hhw"
+EPA_BULBS_TITLE = "US EPA: Recycling and Disposal of Mercury-Containing Bulbs"
+EPA_BULBS_URL = (
+    "https://www.epa.gov/mercury/"
+    "recycling-and-disposal-cfls-and-other-bulbs-contain-mercury"
+)
+FDA_SHARPS_TITLE = "US FDA: Best Way to Get Rid of Used Needles and Other Sharps"
+FDA_SHARPS_URL = (
+    "https://www.fda.gov/medical-devices/"
+    "safely-using-sharps-needles-and-syringes-home-work-and-travel/"
+    "best-way-get-rid-used-needles-and-other-sharps"
+)
+MILWAUKEE_RECYCLING_TITLE = "City of Milwaukee: Curbside Recycling Guide"
+MILWAUKEE_RECYCLING_URL = (
+    "https://city.milwaukee.gov/recycle/what/Curbside-Recycling-Guide"
+)
+SONOMA_POUCHES_TITLE = "Zero Waste Sonoma: Drink Pouches"
+SONOMA_POUCHES_URL = "https://zerowastesonoma.gov/materials/drink-pouches"
+ST_PAUL_RECYCLING_TITLE = "City of Saint Paul: General Recycling Guide"
+ST_PAUL_RECYCLING_URL = (
+    "https://www.stpaul.gov/sites/default/files/2023-10/"
+    "Poster-%20General%20Recycling%20%28with%20text%29%208.5%20x%2011.pdf"
+)
 RECYCLE_SMART_TITLE = "Recycle Smart Massachusetts: Where Does It Go?"
 RECYCLE_SMART_URL = "https://recyclesmartma.org/where-does-it-go/"
-VERIFIED_AT = datetime(2026, 10, 14, tzinfo=UTC)
+VERIFIED_AT = datetime(2026, 10, 16, tzinfo=UTC)
 
 
 MATERIAL_CATALOG: tuple[MaterialCatalogEntry, ...] = (
@@ -55,8 +82,8 @@ MATERIAL_CATALOG: tuple[MaterialCatalogEntry, ...] = (
         instructions="Place the empty metal food can in recycling.",
         preparation="Remove food and rinse or scrape the can clean.",
         warning=None,
-        source_title=EPA_COMMON_TITLE,
-        source_url=EPA_COMMON_URL,
+        source_title=MILWAUKEE_RECYCLING_TITLE,
+        source_url=MILWAUKEE_RECYCLING_URL,
         verified_at=VERIFIED_AT,
     ),
     MaterialCatalogEntry(
@@ -276,8 +303,8 @@ MATERIAL_CATALOG: tuple[MaterialCatalogEntry, ...] = (
         instructions="Sell or donate clean, usable clothing and household textiles to an organization that accepts them.",
         preparation="Wash the item and confirm the recipient's condition requirements before donating.",
         warning=None,
-        source_title=EPA_REUSE_TITLE,
-        source_url=EPA_REUSE_URL,
+        source_title=EPA_COMMON_TITLE,
+        source_url=EPA_COMMON_URL,
         verified_at=VERIFIED_AT,
     ),
     MaterialCatalogEntry(
@@ -293,11 +320,11 @@ MATERIAL_CATALOG: tuple[MaterialCatalogEntry, ...] = (
         ),
         action="check_locally",
         headline="Check the label and local rules",
-        instructions="Packaging made from bonded materials may require a special program and often cannot go in curbside recycling.",
-        preparation="Separate components only when the package and local program provide clear instructions.",
-        warning="Do not rely on the recycling symbol alone.",
-        source_title=EPA_COMMON_TITLE,
-        source_url=EPA_COMMON_URL,
+        instructions="Bonded pouches generally do not belong in curbside recycling, although a mail-back program may accept some products.",
+        preparation="Use a mail-back option only when it explicitly lists the package type and follow its preparation instructions.",
+        warning="Layers of plastic, foil, and paper are difficult to separate for recycling.",
+        source_title=SONOMA_POUCHES_TITLE,
+        source_url=SONOMA_POUCHES_URL,
         verified_at=VERIFIED_AT,
     ),
     MaterialCatalogEntry(
@@ -319,6 +346,219 @@ MATERIAL_CATALOG: tuple[MaterialCatalogEntry, ...] = (
         warning=None,
         source_title=RECYCLE_SMART_TITLE,
         source_url=RECYCLE_SMART_URL,
+        verified_at=VERIFIED_AT,
+    ),
+    MaterialCatalogEntry(
+        key="aluminum_foil_or_tray",
+        display_name="Aluminum foil or tray",
+        category="metal",
+        aliases=(
+            "aluminum foil or tray",
+            "aluminum foil",
+            "aluminium foil",
+            "foil tray",
+            "aluminum tray",
+            "pie tin",
+        ),
+        action="check_locally",
+        headline="Check your local program",
+        instructions="Many programs recycle clean aluminum foil and trays, but local acceptance varies.",
+        preparation="Remove food residue before recycling foil that your local program accepts.",
+        warning="Do not recycle foil with baked-on food or foil bonded to paper or plastic.",
+        source_title=EPA_COMMON_TITLE,
+        source_url=EPA_COMMON_URL,
+        verified_at=VERIFIED_AT,
+    ),
+    MaterialCatalogEntry(
+        key="pizza_box",
+        display_name="Pizza box",
+        category="paper",
+        aliases=(
+            "a pizza box",
+            "pizza box",
+            "cardboard pizza box",
+            "pizza carton",
+        ),
+        action="recycle",
+        headline="Recycle it",
+        instructions="Place the pizza box in recycling after removing all food scraps.",
+        preparation="Remove liners and leftover food, then flatten the box.",
+        warning="Local programs may set stricter limits for heavily food-soiled cardboard.",
+        source_title=EPA_COMMON_TITLE,
+        source_url=EPA_COMMON_URL,
+        verified_at=VERIFIED_AT,
+    ),
+    MaterialCatalogEntry(
+        key="paper_cup_or_takeout_container",
+        display_name="Paper cup or takeout container",
+        category="paper",
+        aliases=(
+            "a disposable paper cup or takeout container",
+            "paper cup",
+            "coffee cup",
+            "paper takeout container",
+            "paper food container",
+            "takeout box",
+        ),
+        action="check_locally",
+        headline="Check your local program",
+        instructions="Paper cups and takeout containers may be recyclable when the local program accepts their coatings.",
+        preparation="Empty the container, scrape away food, and remove plastic lids, straws, or utensils.",
+        warning="Wet or heavily food-soiled paper should not go in curbside recycling.",
+        source_title=EPA_COMMON_TITLE,
+        source_url=EPA_COMMON_URL,
+        verified_at=VERIFIED_AT,
+    ),
+    MaterialCatalogEntry(
+        key="food_or_beverage_carton",
+        display_name="Food or beverage carton",
+        category="packaging",
+        aliases=(
+            "a food or beverage carton",
+            "beverage carton",
+            "food carton",
+            "milk carton",
+            "juice carton",
+            "soup carton",
+            "aseptic carton",
+        ),
+        action="check_locally",
+        headline="Check your local program",
+        instructions="Carton recycling depends on whether the local program accepts plastic- or foil-lined cartons.",
+        preparation="Empty and rinse the carton, then follow local instructions for caps and flattening.",
+        warning="Do not place a carton with food or liquid remaining in recycling.",
+        source_title=EPA_STANDARDIZED_TITLE,
+        source_url=EPA_STANDARDIZED_URL,
+        verified_at=VERIFIED_AT,
+    ),
+    MaterialCatalogEntry(
+        key="ceramic_dish_or_drinking_glass",
+        display_name="Ceramic dish or drinking glass",
+        category="household_material",
+        aliases=(
+            "a ceramic dish or drinking glass",
+            "ceramic dish",
+            "ceramic plate",
+            "ceramic mug",
+            "drinking glass",
+            "glass cup",
+            "glassware",
+        ),
+        action="trash",
+        headline="Reuse it or put it in the trash",
+        instructions="Donate intact reusable dishes and glassware; otherwise place them in household trash.",
+        preparation="Wrap broken pieces securely and follow local instructions for safe trash disposal.",
+        warning="Ceramics and drinking glasses contaminate bottle-and-jar recycling and can endanger workers when broken.",
+        source_title=MILWAUKEE_RECYCLING_TITLE,
+        source_url=MILWAUKEE_RECYCLING_URL,
+        verified_at=VERIFIED_AT,
+    ),
+    MaterialCatalogEntry(
+        key="plastic_utensil_or_straw",
+        display_name="Plastic utensil or straw",
+        category="plastic",
+        aliases=(
+            "a plastic utensil or straw",
+            "plastic utensil",
+            "plastic cutlery",
+            "plastic fork",
+            "plastic spoon",
+            "plastic knife",
+            "plastic straw",
+        ),
+        action="trash",
+        headline="Put it in the trash",
+        instructions="Disposable plastic utensils and straws do not belong in general household recycling.",
+        preparation="Reuse durable alternatives when possible and place disposable items in household trash.",
+        warning="A local program may publish a different rule, so follow verified local guidance when available.",
+        source_title=ST_PAUL_RECYCLING_TITLE,
+        source_url=ST_PAUL_RECYCLING_URL,
+        verified_at=VERIFIED_AT,
+    ),
+    MaterialCatalogEntry(
+        key="yard_trimmings",
+        display_name="Yard trimmings",
+        category="organic",
+        aliases=(
+            "yard trimmings",
+            "yard waste",
+            "grass clippings",
+            "dry leaves",
+            "plant trimmings",
+            "small twigs",
+        ),
+        action="compost",
+        headline="Compost it or use local yard-waste collection",
+        instructions="Compost suitable yard trimmings at home or use an accepting municipal organics program.",
+        preparation="Remove plastic, wire, plant pots, and other non-organic material before composting.",
+        warning="Keep diseased plants, invasive weeds, and chemically treated trimmings out of a home compost pile.",
+        source_title=EPA_COMPOST_TITLE,
+        source_url=EPA_COMPOST_URL,
+        verified_at=VERIFIED_AT,
+    ),
+    MaterialCatalogEntry(
+        key="cfl_or_fluorescent_bulb",
+        display_name="CFL or fluorescent bulb",
+        category="household_hazardous_waste",
+        aliases=(
+            "a CFL or fluorescent light bulb",
+            "CFL bulb",
+            "compact fluorescent bulb",
+            "fluorescent bulb",
+            "fluorescent light bulb",
+            "fluorescent tube",
+            "mercury light bulb",
+        ),
+        action="special_drop_off",
+        headline="Use a bulb or hazardous-waste drop-off",
+        instructions="Take the bulb to a local retailer or collection program that accepts mercury-containing bulbs.",
+        preparation="Keep the bulb intact and store it in packaging that prevents breakage during transport.",
+        warning="Do not place a CFL or fluorescent bulb in curbside recycling; special cleanup is required if it breaks.",
+        source_title=EPA_BULBS_TITLE,
+        source_url=EPA_BULBS_URL,
+        verified_at=VERIFIED_AT,
+    ),
+    MaterialCatalogEntry(
+        key="paint_or_solvent_container",
+        display_name="Paint or solvent container",
+        category="household_hazardous_waste",
+        aliases=(
+            "a paint or solvent container",
+            "paint container",
+            "paint can",
+            "leftover paint",
+            "solvent container",
+            "paint thinner",
+            "wood stain",
+        ),
+        action="special_drop_off",
+        headline="Use a household hazardous-waste program",
+        instructions="Take leftover paint or solvent to an accepting household hazardous-waste collection program.",
+        preparation="Keep the product in its original labeled container with the lid secured.",
+        warning="Do not pour paint or solvent onto the ground, into a drain, or into a storm sewer.",
+        source_title=EPA_HHW_TITLE,
+        source_url=EPA_HHW_URL,
+        verified_at=VERIFIED_AT,
+    ),
+    MaterialCatalogEntry(
+        key="needle_or_medical_sharp",
+        display_name="Needle or medical sharp",
+        category="medical_waste",
+        aliases=(
+            "a needle or medical sharp",
+            "medical sharp",
+            "used needle",
+            "syringe",
+            "lancet",
+            "injection pen needle",
+        ),
+        action="special_drop_off",
+        headline="Use an approved sharps container",
+        instructions="Place the sharp in an appropriate sharps container immediately, then use a disposal option allowed by your community.",
+        preparation="Close the container when it is about three-quarters full and follow the program's labeling and drop-off instructions.",
+        warning="Never place a loose sharp in household trash or recycling, and never reuse a sharps container.",
+        source_title=FDA_SHARPS_TITLE,
+        source_url=FDA_SHARPS_URL,
         verified_at=VERIFIED_AT,
     ),
 )
