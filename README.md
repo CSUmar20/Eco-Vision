@@ -246,9 +246,14 @@ Successful responses contain:
 
 - Scan ID and creation time
 - Model identifier
-- Top prediction and confidence
-- Up to four alternative predictions
-- `disposal_status: "local_rules_not_checked"`
+- Top prediction, confidence, and canonical material mapping
+- Up to four alternative predictions with canonical material mappings
+- Source-backed disposal guidance for the top material
+
+When a selected jurisdiction has a rule for the detected material, the response uses that rule and
+sets `disposal_guidance.scope` to `"jurisdiction"`. Otherwise, it falls back to the matching
+country-level general rule with scope `"general"`. Guidance is `null` when the classifier fallback
+has no material mapping or no sourced rule is available.
 
 ### `PATCH /scans/{scan_id}/confirmation`
 

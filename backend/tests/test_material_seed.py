@@ -8,6 +8,7 @@ from app.material_catalog import MATERIAL_CATALOG
 from app.models import GeneralDisposalRule, Material, MaterialAlias
 from app.services.classifier import CANDIDATE_LABELS
 from app.services.materials import (
+    get_general_disposal_rule,
     normalize_material_alias,
     resolve_material_aliases,
     seed_material_catalog,
@@ -138,3 +139,18 @@ def test_material_alias_resolution_normalizes_classifier_labels() -> None:
         resolved_materials = resolve_material_aliases(database, [label, "   "])
 
         assert resolved_materials[label].key == "corrugated_cardboard_box"
+
+
+def test_general_guidance_is_loaded_by_material_and_country() -> None:
+    with create_material_database() as database:
+        seed_material_catalog(database)
+        material = resolve_material_aliases(database, ["a cardboard box"])[
+            "a cardboard box"
+        ]
+
+        rule = get_general_disposal_rule(database, material.id, "US")
+
+        assert rule is not None
+        assert rule.action == "recycle"
+        assert rule.material_id == material.id
+        assert get_general_disposal_rule(database, material.id, "CA") is None

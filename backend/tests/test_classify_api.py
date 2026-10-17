@@ -1,6 +1,7 @@
 from collections.abc import Iterator
 from datetime import UTC, datetime
 from io import BytesIO
+from types import SimpleNamespace
 from uuid import UUID, uuid4
 
 import pytest
@@ -10,7 +11,7 @@ from PIL import Image
 from sqlalchemy.exc import SQLAlchemyError
 
 from app import main
-from app.models import Material, Scan
+from app.models import DisposalRule, GeneralDisposalRule, Material, Scan
 
 PREDICTIONS = [
     {"label": "a cardboard box", "score": 0.82},
@@ -20,21 +21,38 @@ PREDICTIONS = [
 
 MATERIALS_BY_LABEL = {
     "a cardboard box": Material(
+        id=uuid4(),
         key="corrugated_cardboard_box",
         display_name="Cardboard box",
         category="paper",
     ),
     "a sheet of paper": Material(
+        id=uuid4(),
         key="paper_sheet",
         display_name="Paper",
         category="paper",
     ),
     "mixed-material packaging": Material(
+        id=uuid4(),
         key="mixed_material_packaging",
         display_name="Mixed-material packaging",
         category="packaging",
     ),
 }
+
+GENERAL_GUIDANCE = GeneralDisposalRule(
+    id=uuid4(),
+    material_id=MATERIALS_BY_LABEL["a cardboard box"].id,
+    country_code="US",
+    action="recycle",
+    headline="Recycle it",
+    instructions="Place the clean cardboard box in recycling.",
+    preparation="Remove packing material and food scraps, then flatten the box.",
+    warning=None,
+    source_title="US EPA: How Do I Recycle Common Recyclables",
+    source_url="https://www.epa.gov/recycle/how-do-i-recycle-common-recyclables",
+    verified_at=datetime(2026, 10, 16, tzinfo=UTC),
+)
 
 
 class ClassifierStub:
@@ -104,6 +122,16 @@ def api_context(
             if label in MATERIALS_BY_LABEL
         },
     )
+    monkeypatch.setattr(
+        main,
+        "get_general_disposal_rule",
+        lambda session, material_id, country_code: GENERAL_GUIDANCE,
+    )
+    monkeypatch.setattr(
+        main,
+        "get_disposal_rule",
+        lambda session, jurisdiction_id, material_key: None,
+    )
 
     try:
         with TestClient(main.app) as client:
@@ -149,6 +177,21 @@ def test_valid_image_returns_201(
             "material_display_name": "Mixed-material packaging",
         },
     ]
+    assert response.json()["disposal_guidance"] == {
+        "scope": "general",
+        "material_key": "corrugated_cardboard_box",
+        "country_code": "US",
+        "action": "recycle",
+        "headline": "Recycle it",
+        "instructions": "Place the clean cardboard box in recycling.",
+        "preparation": "Remove packing material and food scraps, then flatten the box.",
+        "warning": None,
+        "source_title": "US EPA: How Do I Recycle Common Recyclables",
+        "source_url": (
+            "https://www.epa.gov/recycle/how-do-i-recycle-common-recyclables"
+        ),
+        "verified_at": "2026-10-16T00:00:00Z",
+    }
     assert UUID(response.json()["scan_id"])
     assert classifier.call_count == 1
     assert database.commit_called
@@ -233,7 +276,11 @@ def test_selected_jurisdiction_is_saved_with_scan(
 ) -> None:
     client, database, classifier = api_context
     jurisdiction_id = uuid4()
-    monkeypatch.setattr(main, "get_jurisdiction", lambda session, identifier: object())
+    monkeypatch.setattr(
+        main,
+        "get_jurisdiction",
+        lambda session, identifier: SimpleNamespace(country_code="US"),
+    )
 
     response = client.post(
         "/classify",
@@ -246,6 +293,71 @@ def test_selected_jurisdiction_is_saved_with_scan(
     assert database.added_scan is not None
     assert database.added_scan.jurisdiction_id == jurisdiction_id
     assert classifier.call_count == 1
+
+
+def test_selected_jurisdiction_guidance_overrides_general_guidance(
+    api_context: tuple[TestClient, FakeDatabaseSession, ClassifierStub],
+    png_image_bytes: bytes,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    client, _, _ = api_context
+    jurisdiction_id = uuid4()
+    local_rule = DisposalRule(
+        id=uuid4(),
+        jurisdiction_id=jurisdiction_id,
+        material_key="corrugated_cardboard_box",
+        status="accepted_curbside",
+        instructions="Flatten the box and place it in the blue cart.",
+        source_title="Official municipal recycling guide",
+        source_url="https://example.gov/recycling",
+        verified_at=datetime(2026, 10, 17, tzinfo=UTC),
+    )
+    monkeypatch.setattr(
+        main,
+        "get_jurisdiction",
+        lambda session, identifier: SimpleNamespace(country_code="US"),
+    )
+    monkeypatch.setattr(
+        main,
+        "get_disposal_rule",
+        lambda session, identifier, material_key: local_rule,
+    )
+
+    response = client.post(
+        "/classify",
+        data={"jurisdiction_id": str(jurisdiction_id)},
+        files={"file": ("item.png", png_image_bytes, "image/png")},
+    )
+
+    assert response.status_code == 201
+    assert response.json()["disposal_guidance"] == {
+        "scope": "jurisdiction",
+        "material_key": "corrugated_cardboard_box",
+        "jurisdiction_id": str(jurisdiction_id),
+        "status": "accepted_curbside",
+        "instructions": "Flatten the box and place it in the blue cart.",
+        "source_title": "Official municipal recycling guide",
+        "source_url": "https://example.gov/recycling",
+        "verified_at": "2026-10-17T00:00:00Z",
+    }
+
+
+def test_missing_general_guidance_returns_null(
+    api_context: tuple[TestClient, FakeDatabaseSession, ClassifierStub],
+    png_image_bytes: bytes,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    client, _, _ = api_context
+    monkeypatch.setattr(
+        main,
+        "get_general_disposal_rule",
+        lambda session, material_id, country_code: None,
+    )
+
+    response = upload(client, png_image_bytes)
+
+    assert response.status_code == 201
+    assert response.json()["disposal_guidance"] is None
 
 
 def test_unknown_jurisdiction_is_rejected_before_classification(
@@ -304,6 +416,27 @@ def test_material_mapping_failure_returns_500_before_scan_is_saved(
         response.json()["detail"]
         == "Classifier labels could not be mapped to materials."
     )
+    assert classifier.call_count == 1
+    assert database.added_scan is None
+    assert not database.commit_called
+
+
+def test_guidance_database_failure_returns_500_before_scan_is_saved(
+    api_context: tuple[TestClient, FakeDatabaseSession, ClassifierStub],
+    png_image_bytes: bytes,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    client, database, classifier = api_context
+
+    def fail_guidance(session, material_id, country_code):
+        raise SQLAlchemyError("database unavailable")
+
+    monkeypatch.setattr(main, "get_general_disposal_rule", fail_guidance)
+
+    response = upload(client, png_image_bytes)
+
+    assert response.status_code == 500
+    assert response.json()["detail"] == "Disposal guidance could not be loaded."
     assert classifier.call_count == 1
     assert database.added_scan is None
     assert not database.commit_called

@@ -2,6 +2,7 @@ import unicodedata
 from collections.abc import Iterable
 from dataclasses import dataclass
 from typing import Final
+from uuid import UUID
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session, joinedload
@@ -63,6 +64,19 @@ def resolve_material_aliases(
         for label, normalized_alias in normalized_by_label.items()
         if (material := materials_by_normalized_alias.get(normalized_alias)) is not None
     }
+
+
+def get_general_disposal_rule(
+    database: Session,
+    material_id: UUID,
+    country_code: str,
+) -> GeneralDisposalRule | None:
+    return database.scalar(
+        select(GeneralDisposalRule).where(
+            GeneralDisposalRule.material_id == material_id,
+            GeneralDisposalRule.country_code == country_code,
+        )
+    )
 
 
 def seed_material_catalog(

@@ -1,9 +1,25 @@
 from datetime import datetime
 from enum import StrEnum
-from typing import Literal
+from typing import Annotated, Literal
 from uuid import UUID
 
 from pydantic import BaseModel, Field
+
+
+class GeneralDisposalAction(StrEnum):
+    REUSE_OR_DONATE = "reuse_or_donate"
+    RECYCLE = "recycle"
+    COMPOST = "compost"
+    SPECIAL_DROP_OFF = "special_drop_off"
+    TRASH = "trash"
+    CHECK_LOCALLY = "check_locally"
+
+
+class DisposalStatus(StrEnum):
+    ACCEPTED_CURBSIDE = "accepted_curbside"
+    NOT_ACCEPTED_CURBSIDE = "not_accepted_curbside"
+    DROP_OFF_REQUIRED = "drop_off_required"
+    UNAVAILABLE_OR_UNCLEAR = "unavailable_or_unclear"
 
 
 class PredictionResponse(BaseModel):
@@ -13,13 +29,44 @@ class PredictionResponse(BaseModel):
     material_display_name: str | None = None
 
 
+class GeneralDisposalGuidanceResponse(BaseModel):
+    scope: Literal["general"] = "general"
+    material_key: str
+    country_code: str
+    action: GeneralDisposalAction
+    headline: str
+    instructions: str
+    preparation: str | None
+    warning: str | None
+    source_title: str
+    source_url: str
+    verified_at: datetime
+
+
+class JurisdictionDisposalGuidanceResponse(BaseModel):
+    scope: Literal["jurisdiction"] = "jurisdiction"
+    material_key: str
+    jurisdiction_id: UUID
+    status: DisposalStatus
+    instructions: str | None
+    source_title: str
+    source_url: str
+    verified_at: datetime
+
+
+DisposalGuidanceResponse = Annotated[
+    GeneralDisposalGuidanceResponse | JurisdictionDisposalGuidanceResponse,
+    Field(discriminator="scope"),
+]
+
+
 class ScanResponse(BaseModel):
     scan_id: UUID
     created_at: datetime
     model_id: str
     top_prediction: PredictionResponse
     alternatives: list[PredictionResponse]
-    disposal_status: Literal["local_rules_not_checked"] = "local_rules_not_checked"
+    disposal_guidance: DisposalGuidanceResponse | None
     jurisdiction_id: UUID | None = None
 
 
@@ -37,13 +84,6 @@ class JurisdictionType(StrEnum):
     COUNTY = "county"
     MUNICIPALITY = "municipality"
     WASTE_PROVIDER = "waste_provider"
-
-
-class DisposalStatus(StrEnum):
-    ACCEPTED_CURBSIDE = "accepted_curbside"
-    NOT_ACCEPTED_CURBSIDE = "not_accepted_curbside"
-    DROP_OFF_REQUIRED = "drop_off_required"
-    UNAVAILABLE_OR_UNCLEAR = "unavailable_or_unclear"
 
 
 class JurisdictionResponse(BaseModel):

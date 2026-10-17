@@ -19,9 +19,17 @@ from sqlalchemy.orm import Session
 
 from app.config import settings
 from app.database import get_database_session
-from app.models import DisposalRule, Jurisdiction, Material, Scan
+from app.models import (
+    DisposalRule,
+    GeneralDisposalRule,
+    Jurisdiction,
+    Material,
+    Scan,
+)
 from app.schemas import (
     DisposalRuleResponse,
+    GeneralDisposalGuidanceResponse,
+    JurisdictionDisposalGuidanceResponse,
     JurisdictionResponse,
     JurisdictionRulesResponse,
     PredictionResponse,
@@ -31,11 +39,15 @@ from app.schemas import (
 )
 from app.services.classifier import classify_image
 from app.services.jurisdictions import (
+    get_disposal_rule,
     get_disposal_rules,
     get_jurisdiction,
     search_jurisdictions,
 )
-from app.services.materials import resolve_material_aliases
+from app.services.materials import (
+    get_general_disposal_rule,
+    resolve_material_aliases,
+)
 
 app = FastAPI(
     title="EcoVision API",
@@ -114,6 +126,38 @@ def prediction_response(
         score=score,
         material_key=material.key if material is not None else None,
         material_display_name=material.display_name if material is not None else None,
+    )
+
+
+def general_disposal_guidance_response(
+    material: Material,
+    rule: GeneralDisposalRule,
+) -> GeneralDisposalGuidanceResponse:
+    return GeneralDisposalGuidanceResponse(
+        material_key=material.key,
+        country_code=rule.country_code,
+        action=rule.action,
+        headline=rule.headline,
+        instructions=rule.instructions,
+        preparation=rule.preparation,
+        warning=rule.warning,
+        source_title=rule.source_title,
+        source_url=rule.source_url,
+        verified_at=rule.verified_at,
+    )
+
+
+def jurisdiction_disposal_guidance_response(
+    rule: DisposalRule,
+) -> JurisdictionDisposalGuidanceResponse:
+    return JurisdictionDisposalGuidanceResponse(
+        material_key=rule.material_key,
+        jurisdiction_id=rule.jurisdiction_id,
+        status=rule.status,
+        instructions=rule.instructions,
+        source_title=rule.source_title,
+        source_url=rule.source_url,
+        verified_at=rule.verified_at,
     )
 
 
@@ -197,6 +241,8 @@ def classify_uploaded_image(
             detail="Only JPEG, PNG, and WebP images are supported.",
         )
 
+    jurisdiction: Jurisdiction | None = None
+
     if jurisdiction_id is not None:
         try:
             jurisdiction = get_jurisdiction(database, jurisdiction_id)
@@ -253,10 +299,49 @@ def classify_uploaded_image(
         ) from error
 
     top_prediction = predictions[0]
+    top_label = str(top_prediction["label"])
+    top_material = materials_by_label.get(top_label)
+    disposal_guidance = None
+
+    if top_material is not None:
+        try:
+            jurisdiction_rule = None
+
+            if jurisdiction_id is not None:
+                jurisdiction_rule = get_disposal_rule(
+                    database,
+                    jurisdiction_id,
+                    top_material.key,
+                )
+
+            if jurisdiction_rule is not None:
+                disposal_guidance = jurisdiction_disposal_guidance_response(
+                    jurisdiction_rule
+                )
+            else:
+                country_code = (
+                    jurisdiction.country_code if jurisdiction is not None else "US"
+                )
+                general_rule = get_general_disposal_rule(
+                    database,
+                    top_material.id,
+                    country_code,
+                )
+
+                if general_rule is not None:
+                    disposal_guidance = general_disposal_guidance_response(
+                        top_material,
+                        general_rule,
+                    )
+        except SQLAlchemyError as error:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Disposal guidance could not be loaded.",
+            ) from error
 
     scan = Scan(
         model_id=settings.hf_model,
-        top_label=str(top_prediction["label"]),
+        top_label=top_label,
         confidence=float(top_prediction["score"]),
         predictions=predictions,
         jurisdiction_id=jurisdiction_id,
@@ -291,6 +376,7 @@ def classify_uploaded_image(
             )
             for prediction in predictions[1:5]
         ],
+        disposal_guidance=disposal_guidance,
         jurisdiction_id=scan.jurisdiction_id,
     )
 

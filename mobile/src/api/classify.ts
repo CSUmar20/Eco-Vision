@@ -6,7 +6,48 @@ import { API_BASE_URL } from '@/config/api';
 export type Prediction = {
   label: string;
   score: number;
+  material_key: string | null;
+  material_display_name: string | null;
 };
+
+type GeneralDisposalGuidance = {
+  scope: 'general';
+  material_key: string;
+  country_code: string;
+  action:
+    | 'reuse_or_donate'
+    | 'recycle'
+    | 'compost'
+    | 'special_drop_off'
+    | 'trash'
+    | 'check_locally';
+  headline: string;
+  instructions: string;
+  preparation: string | null;
+  warning: string | null;
+  source_title: string;
+  source_url: string;
+  verified_at: string;
+};
+
+type JurisdictionDisposalGuidance = {
+  scope: 'jurisdiction';
+  material_key: string;
+  jurisdiction_id: string;
+  status:
+    | 'accepted_curbside'
+    | 'not_accepted_curbside'
+    | 'drop_off_required'
+    | 'unavailable_or_unclear';
+  instructions: string | null;
+  source_title: string;
+  source_url: string;
+  verified_at: string;
+};
+
+export type DisposalGuidance =
+  | GeneralDisposalGuidance
+  | JurisdictionDisposalGuidance;
 
 export type ScanResult = {
   scan_id: string;
@@ -14,7 +55,8 @@ export type ScanResult = {
   model_id: string;
   top_prediction: Prediction;
   alternatives: Prediction[];
-  disposal_status: 'local_rules_not_checked';
+  disposal_guidance: DisposalGuidance | null;
+  jurisdiction_id: string | null;
 };
 
 export type ScanConfirmation = {

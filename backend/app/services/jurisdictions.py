@@ -66,3 +66,16 @@ def get_disposal_rules(
     )
 
     return list(database.scalars(statement).all())
+
+
+def get_disposal_rule(
+    database: Session,
+    jurisdiction_id: UUID,
+    material_key: str,
+) -> DisposalRule | None:
+    statement = select(DisposalRule).where(
+        DisposalRule.jurisdiction_id == jurisdiction_id,
+        DisposalRule.material_key == material_key,
+    )
+
+    return database.scalar(statement)
