@@ -19,7 +19,7 @@ from sqlalchemy.orm import Session
 
 from app.config import settings
 from app.database import get_database_session
-from app.models import DisposalRule, Jurisdiction, Scan
+from app.models import DisposalRule, Jurisdiction, Material, Scan
 from app.schemas import (
     DisposalRuleResponse,
     JurisdictionResponse,
@@ -35,6 +35,7 @@ from app.services.jurisdictions import (
     get_jurisdiction,
     search_jurisdictions,
 )
+from app.services.materials import resolve_material_aliases
 
 app = FastAPI(
     title="EcoVision API",
@@ -84,7 +85,9 @@ def jurisdiction_response(jurisdiction: Jurisdiction) -> JurisdictionResponse:
         county_name=jurisdiction.county_name,
         waste_provider=jurisdiction.waste_provider,
         parent_id=jurisdiction.parent_id,
-        postal_codes=[postal_code.postal_code for postal_code in jurisdiction.postal_codes],
+        postal_codes=[
+            postal_code.postal_code for postal_code in jurisdiction.postal_codes
+        ],
     )
 
 
@@ -96,6 +99,21 @@ def disposal_rule_response(rule: DisposalRule) -> DisposalRuleResponse:
         source_title=rule.source_title,
         source_url=rule.source_url,
         verified_at=rule.verified_at,
+    )
+
+
+def prediction_response(
+    label: str,
+    score: float,
+    materials_by_label: dict[str, Material],
+) -> PredictionResponse:
+    material = materials_by_label.get(label)
+
+    return PredictionResponse(
+        label=label,
+        score=score,
+        material_key=material.key if material is not None else None,
+        material_display_name=material.display_name if material is not None else None,
     )
 
 
@@ -223,6 +241,17 @@ def classify_uploaded_image(
             detail="The classifier returned no predictions.",
         )
 
+    try:
+        materials_by_label = resolve_material_aliases(
+            database,
+            (str(prediction["label"]) for prediction in predictions),
+        )
+    except SQLAlchemyError as error:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Classifier labels could not be mapped to materials.",
+        ) from error
+
     top_prediction = predictions[0]
 
     scan = Scan(
@@ -249,14 +278,16 @@ def classify_uploaded_image(
         scan_id=scan.id,
         created_at=scan.created_at,
         model_id=scan.model_id,
-        top_prediction=PredictionResponse(
-            label=scan.top_label,
-            score=scan.confidence,
+        top_prediction=prediction_response(
+            scan.top_label,
+            scan.confidence,
+            materials_by_label,
         ),
         alternatives=[
-            PredictionResponse(
-                label=str(prediction["label"]),
-                score=float(prediction["score"]),
+            prediction_response(
+                str(prediction["label"]),
+                float(prediction["score"]),
+                materials_by_label,
             )
             for prediction in predictions[1:5]
         ],

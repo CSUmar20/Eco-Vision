@@ -10,13 +10,31 @@ from PIL import Image
 from sqlalchemy.exc import SQLAlchemyError
 
 from app import main
-from app.models import Scan
+from app.models import Material, Scan
 
 PREDICTIONS = [
     {"label": "a cardboard box", "score": 0.82},
     {"label": "a sheet of paper", "score": 0.12},
     {"label": "mixed-material packaging", "score": 0.06},
 ]
+
+MATERIALS_BY_LABEL = {
+    "a cardboard box": Material(
+        key="corrugated_cardboard_box",
+        display_name="Cardboard box",
+        category="paper",
+    ),
+    "a sheet of paper": Material(
+        key="paper_sheet",
+        display_name="Paper",
+        category="paper",
+    ),
+    "mixed-material packaging": Material(
+        key="mixed_material_packaging",
+        display_name="Mixed-material packaging",
+        category="packaging",
+    ),
+}
 
 
 class ClassifierStub:
@@ -77,6 +95,15 @@ def api_context(
 
     main.app.dependency_overrides[main.get_database_session] = lambda: database
     monkeypatch.setattr(main, "classify_image", classifier)
+    monkeypatch.setattr(
+        main,
+        "resolve_material_aliases",
+        lambda session, labels: {
+            label: MATERIALS_BY_LABEL[label]
+            for label in labels
+            if label in MATERIALS_BY_LABEL
+        },
+    )
 
     try:
         with TestClient(main.app) as client:
@@ -105,8 +132,23 @@ def test_valid_image_returns_201(
     response = upload(client, png_image_bytes)
 
     assert response.status_code == 201
-    assert response.json()["top_prediction"] == PREDICTIONS[0]
-    assert response.json()["alternatives"] == PREDICTIONS[1:]
+    assert response.json()["top_prediction"] == {
+        **PREDICTIONS[0],
+        "material_key": "corrugated_cardboard_box",
+        "material_display_name": "Cardboard box",
+    }
+    assert response.json()["alternatives"] == [
+        {
+            **PREDICTIONS[1],
+            "material_key": "paper_sheet",
+            "material_display_name": "Paper",
+        },
+        {
+            **PREDICTIONS[2],
+            "material_key": "mixed_material_packaging",
+            "material_display_name": "Mixed-material packaging",
+        },
+    ]
     assert UUID(response.json()["scan_id"])
     assert classifier.call_count == 1
     assert database.commit_called
@@ -241,6 +283,30 @@ def test_database_failure_rolls_back_and_returns_500(
     assert database.commit_called
     assert database.rollback_called
     assert not database.refresh_called
+
+
+def test_material_mapping_failure_returns_500_before_scan_is_saved(
+    api_context: tuple[TestClient, FakeDatabaseSession, ClassifierStub],
+    png_image_bytes: bytes,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    client, database, classifier = api_context
+
+    def fail_mapping(session, labels):
+        raise SQLAlchemyError("database unavailable")
+
+    monkeypatch.setattr(main, "resolve_material_aliases", fail_mapping)
+
+    response = upload(client, png_image_bytes)
+
+    assert response.status_code == 500
+    assert (
+        response.json()["detail"]
+        == "Classifier labels could not be mapped to materials."
+    )
+    assert classifier.call_count == 1
+    assert database.added_scan is None
+    assert not database.commit_called
 
 
 def test_scan_prediction_can_be_confirmed(

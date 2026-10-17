@@ -1,9 +1,10 @@
 import unicodedata
+from collections.abc import Iterable
 from dataclasses import dataclass
 from typing import Final
 
 from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from app.material_catalog import MATERIAL_CATALOG, MaterialCatalogEntry
 from app.models import (
@@ -31,6 +32,37 @@ VALID_ACTIONS: Final = frozenset(GENERAL_DISPOSAL_ACTIONS)
 def normalize_material_alias(value: str) -> str:
     normalized = unicodedata.normalize("NFKC", value).casefold()
     return " ".join(normalized.split())
+
+
+def resolve_material_aliases(
+    database: Session,
+    labels: Iterable[str],
+) -> dict[str, Material]:
+    normalized_by_label = {
+        label: normalize_material_alias(label) for label in labels if label.strip()
+    }
+
+    if not normalized_by_label:
+        return {}
+
+    aliases = database.scalars(
+        select(MaterialAlias)
+        .join(MaterialAlias.material)
+        .options(joinedload(MaterialAlias.material))
+        .where(
+            MaterialAlias.normalized_alias.in_(set(normalized_by_label.values())),
+            Material.active.is_(True),
+        )
+    ).all()
+    materials_by_normalized_alias = {
+        alias.normalized_alias: alias.material for alias in aliases
+    }
+
+    return {
+        label: material
+        for label, normalized_alias in normalized_by_label.items()
+        if (material := materials_by_normalized_alias.get(normalized_alias)) is not None
+    }
 
 
 def seed_material_catalog(

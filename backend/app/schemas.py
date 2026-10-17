@@ -9,6 +9,8 @@ from pydantic import BaseModel, Field
 class PredictionResponse(BaseModel):
     label: str
     score: float = Field(ge=0.0, le=1.0)
+    material_key: str | None = None
+    material_display_name: str | None = None
 
 
 class ScanResponse(BaseModel):

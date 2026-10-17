@@ -7,7 +7,11 @@ from sqlalchemy.orm import Session
 from app.material_catalog import MATERIAL_CATALOG
 from app.models import GeneralDisposalRule, Material, MaterialAlias
 from app.services.classifier import CANDIDATE_LABELS
-from app.services.materials import normalize_material_alias, seed_material_catalog
+from app.services.materials import (
+    normalize_material_alias,
+    resolve_material_aliases,
+    seed_material_catalog,
+)
 
 
 def create_material_database() -> Session:
@@ -99,7 +103,13 @@ def test_classifier_aliases_resolve_to_canonical_materials() -> None:
 
     with create_material_database() as database:
         seed_material_catalog(database)
+        resolved_materials = resolve_material_aliases(database, CANDIDATE_LABELS)
+
+        assert set(resolved_materials) == set(CANDIDATE_LABELS[:-1])
+
         for classifier_label, expected_key in expected_materials.items():
+            assert resolved_materials[classifier_label].key == expected_key
+
             alias = database.scalar(
                 select(MaterialAlias).where(
                     MaterialAlias.normalized_alias
@@ -117,3 +127,14 @@ def test_classifier_aliases_resolve_to_canonical_materials() -> None:
             )
         )
         assert unknown_alias is None
+
+
+def test_material_alias_resolution_normalizes_classifier_labels() -> None:
+    label = "  A CARDBOARD BOX  "
+
+    with create_material_database() as database:
+        seed_material_catalog(database)
+
+        resolved_materials = resolve_material_aliases(database, [label, "   "])
+
+        assert resolved_materials[label].key == "corrugated_cardboard_box"
