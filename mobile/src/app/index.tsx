@@ -2,7 +2,7 @@ import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { type Href, useRouter } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Platform,
@@ -13,7 +13,12 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { classifyImage, confirmScan, type ScanResult } from '@/api/classify';
+import {
+  classifyImage,
+  confirmScan,
+  type DisposalGuidance,
+  type ScanResult,
+} from '@/api/classify';
 import { HomeDock } from '@/components/home-dock';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -22,6 +27,95 @@ import { useTheme } from '@/hooks/use-theme';
 
 function formatConfidence(score: number): string {
   return `${Math.round(score * 100)}%`;
+}
+
+type RecyclingVerdict = {
+  title: string;
+  description: string;
+  tone: 'positive' | 'negative' | 'caution';
+};
+
+const verdictColors = {
+  positive: {
+    background: '#dfe9da',
+    border: '#78977a',
+    text: '#234d32',
+  },
+  negative: {
+    background: '#f7dfda',
+    border: '#c87970',
+    text: '#7a2e26',
+  },
+  caution: {
+    background: '#f6ecd2',
+    border: '#c7a957',
+    text: '#6a5120',
+  },
+} as const;
+
+function getRecyclingVerdict(guidance: DisposalGuidance | null): RecyclingVerdict {
+  if (!guidance) {
+    return {
+      title: 'Check locally',
+      description: 'EcoVision does not have a verified disposal rule for this material yet.',
+      tone: 'caution',
+    };
+  }
+
+  if (guidance.scope === 'jurisdiction') {
+    switch (guidance.status) {
+      case 'accepted_curbside':
+        return {
+          title: 'Recyclable',
+          description:
+            guidance.instructions ?? 'Your selected local program accepts this material.',
+          tone: 'positive',
+        };
+      case 'not_accepted_curbside':
+        return {
+          title: 'Not recyclable',
+          description:
+            guidance.instructions ?? 'Your selected local program does not accept this material.',
+          tone: 'negative',
+        };
+      case 'drop_off_required':
+        return {
+          title: 'Not curbside recyclable',
+          description:
+            guidance.instructions ?? 'Take this material to an approved special drop-off.',
+          tone: 'negative',
+        };
+      case 'unavailable_or_unclear':
+        return {
+          title: 'Check locally',
+          description:
+            guidance.instructions ?? 'Local recycling guidance is unavailable or unclear.',
+          tone: 'caution',
+        };
+    }
+  }
+
+  if (guidance.action === 'recycle') {
+    return {
+      title: 'Recyclable',
+      description: guidance.instructions,
+      tone: 'positive',
+    };
+  }
+
+  if (guidance.action === 'check_locally') {
+    return {
+      title: 'Check locally',
+      description: guidance.instructions,
+      tone: 'caution',
+    };
+  }
+
+  return {
+    title: guidance.action === 'trash' ? 'Not recyclable' : 'Not curbside recyclable',
+    description: guidance.instructions,
+    tone: 'negative',
+  };
 }
 
 export default function HomeScreen() {
@@ -35,12 +129,23 @@ export default function HomeScreen() {
   const [confirmedLabel, setConfirmedLabel] = useState<string | null>(null);
   const [confirmationError, setConfirmationError] = useState<string | null>(null);
   const [isConfirming, setIsConfirming] = useState(false);
+  const [showCorrectionOptions, setShowCorrectionOptions] = useState(false);
+  const recyclingVerdict = scanResult
+    ? getRecyclingVerdict(scanResult.disposal_guidance)
+    : null;
+
+  useEffect(() => {
+    if (scanResult) {
+      scrollViewRef.current?.scrollTo({ y: 0, animated: true });
+    }
+  }, [scanResult]);
 
   function resetResultState() {
     setScanResult(null);
     setErrorMessage(null);
     setConfirmedLabel(null);
     setConfirmationError(null);
+    setShowCorrectionOptions(false);
   }
 
   async function analyzeAsset(asset: ImagePicker.ImagePickerAsset) {
@@ -130,7 +235,28 @@ export default function HomeScreen() {
 
     try {
       const confirmation = await confirmScan(scanResult.scan_id, label);
+      setScanResult((currentResult) => {
+        if (!currentResult) {
+          return currentResult;
+        }
+
+        const previousTopPrediction = currentResult.top_prediction;
+        const remainingAlternatives = currentResult.alternatives.filter(
+          (prediction) => prediction.label !== confirmation.confirmed_label,
+        );
+
+        return {
+          ...currentResult,
+          top_prediction: confirmation.confirmed_prediction,
+          alternatives:
+            previousTopPrediction.label === confirmation.confirmed_label
+              ? remainingAlternatives
+              : [previousTopPrediction, ...remainingAlternatives],
+          disposal_guidance: confirmation.disposal_guidance,
+        };
+      });
       setConfirmedLabel(confirmation.confirmed_label);
+      setShowCorrectionOptions(false);
     } catch (error) {
       setConfirmationError(
         error instanceof Error ? error.message : 'The confirmation could not be saved.',
@@ -172,47 +298,49 @@ export default function HomeScreen() {
             </Pressable>
           </View>
 
-          <View style={styles.hero}>
-            <View style={styles.heroCopy}>
-              <ThemedText type="title" style={styles.heroTitle}>
-                Tap to recycle
-              </ThemedText>
-              <ThemedText themeColor="textSecondary" style={styles.heroSubtitle}>
-                Photograph one item. EcoVision will identify its closest material match.
+          {!scanResult && (
+            <View style={styles.hero}>
+              <View style={styles.heroCopy}>
+                <ThemedText type="title" style={styles.heroTitle}>
+                  Tap to recycle
+                </ThemedText>
+                <ThemedText themeColor="textSecondary" style={styles.heroSubtitle}>
+                  Photograph one item. EcoVision will identify its closest material match.
+                </ThemedText>
+              </View>
+
+              <Pressable
+                accessibilityHint="Opens the camera to identify a recyclable item"
+                accessibilityLabel="Tap to recycle"
+                accessibilityRole="button"
+                disabled={isLoading}
+                onPress={takePhoto}
+                style={({ pressed }) => [
+                  styles.leafButton,
+                  pressed && styles.leafPressed,
+                  isLoading && styles.disabled,
+                ]}>
+                <View style={styles.leafGlow} />
+                <Image
+                  source={require('@/assets/images/hex-leaf.svg')}
+                  style={styles.leafImage}
+                  contentFit="contain"
+                />
+                {isLoading && (
+                  <View style={styles.leafLoading}>
+                    <ActivityIndicator color="#ffffff" size="large" />
+                    <ThemedText type="smallBold" style={styles.leafLoadingText}>
+                      Identifying…
+                    </ThemedText>
+                  </View>
+                )}
+              </Pressable>
+
+              <ThemedText type="smallBold" style={styles.cameraHint}>
+                TAP THE LEAF TO OPEN CAMERA
               </ThemedText>
             </View>
-
-            <Pressable
-              accessibilityHint="Opens the camera to identify a recyclable item"
-              accessibilityLabel="Tap to recycle"
-              accessibilityRole="button"
-              disabled={isLoading}
-              onPress={takePhoto}
-              style={({ pressed }) => [
-                styles.leafButton,
-                pressed && styles.leafPressed,
-                isLoading && styles.disabled,
-              ]}>
-              <View style={styles.leafGlow} />
-              <Image
-                source={require('@/assets/images/hex-leaf.svg')}
-                style={styles.leafImage}
-                contentFit="contain"
-              />
-              {isLoading && (
-                <View style={styles.leafLoading}>
-                  <ActivityIndicator color="#ffffff" size="large" />
-                  <ThemedText type="smallBold" style={styles.leafLoadingText}>
-                    Identifying…
-                  </ThemedText>
-                </View>
-              )}
-            </Pressable>
-
-            <ThemedText type="smallBold" style={styles.cameraHint}>
-              TAP THE LEAF TO OPEN CAMERA
-            </ThemedText>
-          </View>
+          )}
 
           {selectedImage && (
             <ThemedView type="backgroundElement" style={styles.selectedCard}>
@@ -256,14 +384,51 @@ export default function HomeScreen() {
             </View>
           )}
 
-          {scanResult && (
+          {scanResult && recyclingVerdict && (
             <ThemedView style={[styles.resultCard, { borderColor: theme.backgroundSelected }]}>
+              <View
+                accessible
+                accessibilityLabel={`${recyclingVerdict.title}. ${recyclingVerdict.description}`}
+                accessibilityLiveRegion="polite"
+                style={[
+                  styles.verdictCard,
+                  {
+                    backgroundColor: verdictColors[recyclingVerdict.tone].background,
+                    borderColor: verdictColors[recyclingVerdict.tone].border,
+                  },
+                ]}>
+                <ThemedText
+                  type="smallBold"
+                  style={[
+                    styles.verdictLabel,
+                    { color: verdictColors[recyclingVerdict.tone].text },
+                  ]}>
+                  DISPOSAL RESULT
+                </ThemedText>
+                <ThemedText
+                  type="subtitle"
+                  style={[
+                    styles.verdictTitle,
+                    { color: verdictColors[recyclingVerdict.tone].text },
+                  ]}>
+                  {recyclingVerdict.title}
+                </ThemedText>
+                <ThemedText
+                  style={[
+                    styles.verdictDescription,
+                    { color: verdictColors[recyclingVerdict.tone].text },
+                  ]}>
+                  {recyclingVerdict.description}
+                </ThemedText>
+              </View>
+
               <ThemedText type="smallBold" style={styles.resultLabel}>
-                TOP MATCH
+                {confirmedLabel ? 'SELECTED MATERIAL' : 'IDENTIFIED MATERIAL'}
               </ThemedText>
               <View style={styles.resultHeading}>
                 <ThemedText type="subtitle" style={styles.resultName}>
-                  {scanResult.top_prediction.label}
+                  {scanResult.top_prediction.material_display_name ??
+                    scanResult.top_prediction.label}
                 </ThemedText>
                 <View style={styles.confidenceBadge}>
                   <ThemedText type="smallBold" style={styles.confidenceText}>
@@ -272,40 +437,36 @@ export default function HomeScreen() {
                 </View>
               </View>
 
-              <ThemedText type="small" themeColor="textSecondary">
-                Disposal guidance has not yet been checked against local rules.
-              </ThemedText>
-
-              {scanResult.alternatives.length > 0 && (
-                <View style={styles.alternatives}>
-                  <ThemedText type="smallBold">Other possible matches</ThemedText>
-                  {scanResult.alternatives.map((prediction) => (
-                    <View key={prediction.label} style={styles.alternativeRow}>
-                      <ThemedText type="small" style={styles.alternativeName}>
-                        {prediction.label}
-                      </ThemedText>
-                      <ThemedText type="smallBold" themeColor="textSecondary">
-                        {formatConfidence(prediction.score)}
-                      </ThemedText>
-                    </View>
-                  ))}
-                </View>
-              )}
-
               <View style={styles.feedbackSection}>
                 <View style={styles.feedbackHeading}>
-                  <ThemedText type="smallBold">Does this match your item?</ThemedText>
+                  <ThemedText type="smallBold">Is this the right material?</ThemedText>
                   {isConfirming && <ActivityIndicator color="#78977a" size="small" />}
                 </View>
 
                 {confirmedLabel ? (
                   <View accessibilityRole="alert" style={styles.confirmationSuccess}>
                     <ThemedText type="smallBold" style={styles.confirmationSuccessTitle}>
-                      Match confirmed
+                      Material saved
                     </ThemedText>
                     <ThemedText type="small" style={styles.confirmationSuccessText}>
-                      You selected “{confirmedLabel}.” Thanks for helping improve EcoVision.
+                      The disposal result now uses “
+                      {scanResult.top_prediction.material_display_name ?? confirmedLabel}.” Thanks
+                      for helping improve EcoVision.
                     </ThemedText>
+                    <Pressable
+                      accessibilityRole="button"
+                      onPress={() => {
+                        setConfirmedLabel(null);
+                        setShowCorrectionOptions(true);
+                      }}
+                      style={({ pressed }) => [
+                        styles.confirmationChangeButton,
+                        pressed && styles.pressed,
+                      ]}>
+                      <ThemedText type="smallBold" style={styles.confirmationChangeText}>
+                        Change material again
+                      </ThemedText>
+                    </Pressable>
                   </View>
                 ) : (
                   <>
@@ -324,31 +485,50 @@ export default function HomeScreen() {
                     </Pressable>
 
                     {scanResult.alternatives.length > 0 && (
-                      <View style={styles.correctionOptions}>
-                        <ThemedText type="small" themeColor="textSecondary">
-                          If not, choose the closest match:
-                        </ThemedText>
-                        {scanResult.alternatives.map((prediction) => (
-                          <Pressable
-                            accessibilityRole="button"
-                            disabled={isConfirming}
-                            key={`confirmation-${prediction.label}`}
-                            onPress={() => confirmPrediction(prediction.label)}
-                            style={({ pressed }) => [
-                              styles.correctionButton,
-                              { borderColor: theme.backgroundSelected },
-                              pressed && styles.pressed,
-                              isConfirming && styles.disabled,
-                            ]}>
-                            <ThemedText type="small" style={styles.correctionLabel}>
-                              {prediction.label}
+                      <>
+                        <Pressable
+                          accessibilityRole="button"
+                          disabled={isConfirming}
+                          onPress={() => setShowCorrectionOptions((visible) => !visible)}
+                          style={({ pressed }) => [
+                            styles.changeMaterialButton,
+                            { borderColor: theme.backgroundSelected },
+                            pressed && styles.pressed,
+                            isConfirming && styles.disabled,
+                          ]}>
+                          <ThemedText type="smallBold" style={styles.changeMaterialButtonText}>
+                            {showCorrectionOptions ? 'Hide other materials' : 'No, change material'}
+                          </ThemedText>
+                        </Pressable>
+
+                        {showCorrectionOptions && (
+                          <View style={styles.correctionOptions}>
+                            <ThemedText type="small" themeColor="textSecondary">
+                              Choose the material that best matches your item:
                             </ThemedText>
-                            <ThemedText type="smallBold" themeColor="textSecondary">
-                              {formatConfidence(prediction.score)}
-                            </ThemedText>
-                          </Pressable>
-                        ))}
-                      </View>
+                            {scanResult.alternatives.map((prediction) => (
+                              <Pressable
+                                accessibilityRole="button"
+                                disabled={isConfirming}
+                                key={`confirmation-${prediction.label}`}
+                                onPress={() => confirmPrediction(prediction.label)}
+                                style={({ pressed }) => [
+                                  styles.correctionButton,
+                                  { borderColor: theme.backgroundSelected },
+                                  pressed && styles.pressed,
+                                  isConfirming && styles.disabled,
+                                ]}>
+                                <ThemedText type="small" style={styles.correctionLabel}>
+                                  {prediction.material_display_name ?? prediction.label}
+                                </ThemedText>
+                                <ThemedText type="smallBold" themeColor="textSecondary">
+                                  {formatConfidence(prediction.score)}
+                                </ThemedText>
+                              </Pressable>
+                            ))}
+                          </View>
+                        )}
+                      </>
                     )}
                   </>
                 )}
@@ -541,6 +721,27 @@ const styles = StyleSheet.create({
     padding: Spacing.four,
     gap: Spacing.three,
   },
+  verdictCard: {
+    borderRadius: Spacing.four,
+    borderWidth: 1,
+    paddingHorizontal: Spacing.four,
+    paddingVertical: Spacing.five,
+    alignItems: 'center',
+    gap: Spacing.two,
+  },
+  verdictLabel: {
+    fontSize: 12,
+    letterSpacing: 1.5,
+  },
+  verdictTitle: {
+    fontSize: 34,
+    lineHeight: 40,
+    textAlign: 'center',
+  },
+  verdictDescription: {
+    maxWidth: 520,
+    textAlign: 'center',
+  },
   resultLabel: {
     color: '#52735b',
     letterSpacing: 1.5,
@@ -562,22 +763,6 @@ const styles = StyleSheet.create({
   },
   confidenceText: {
     color: '#345c43',
-  },
-  alternatives: {
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: '#aeb8b2',
-    paddingTop: Spacing.three,
-    gap: Spacing.two,
-  },
-  alternativeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: Spacing.three,
-  },
-  alternativeName: {
-    flex: 1,
-    textTransform: 'capitalize',
   },
   feedbackSection: {
     borderTopWidth: StyleSheet.hairlineWidth,
@@ -601,6 +786,17 @@ const styles = StyleSheet.create({
   },
   confirmButtonText: {
     color: '#ffffff',
+  },
+  changeMaterialButton: {
+    minHeight: 48,
+    borderRadius: Spacing.three,
+    borderWidth: 1,
+    paddingHorizontal: Spacing.four,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  changeMaterialButtonText: {
+    color: '#52735b',
   },
   correctionOptions: {
     gap: Spacing.two,
@@ -631,6 +827,15 @@ const styles = StyleSheet.create({
   },
   confirmationSuccessText: {
     color: '#345c43',
+  },
+  confirmationChangeButton: {
+    alignSelf: 'flex-start',
+    minHeight: 36,
+    justifyContent: 'center',
+  },
+  confirmationChangeText: {
+    color: '#345c43',
+    textDecorationLine: 'underline',
   },
   confirmationError: {
     color: '#8e1c17',

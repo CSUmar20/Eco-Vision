@@ -77,6 +77,8 @@ class ScanConfirmationRequest(BaseModel):
 class ScanConfirmationResponse(BaseModel):
     scan_id: UUID
     confirmed_label: str
+    confirmed_prediction: PredictionResponse
+    disposal_guidance: DisposalGuidanceResponse | None
 
 
 class JurisdictionType(StrEnum):

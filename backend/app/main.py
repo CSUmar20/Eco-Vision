@@ -161,6 +161,34 @@ def jurisdiction_disposal_guidance_response(
     )
 
 
+def material_disposal_guidance(
+    database: Session,
+    material: Material,
+    jurisdiction_id: UUID | None,
+    country_code: str,
+) -> GeneralDisposalGuidanceResponse | JurisdictionDisposalGuidanceResponse | None:
+    if jurisdiction_id is not None:
+        jurisdiction_rule = get_disposal_rule(
+            database,
+            jurisdiction_id,
+            material.key,
+        )
+
+        if jurisdiction_rule is not None:
+            return jurisdiction_disposal_guidance_response(jurisdiction_rule)
+
+    general_rule = get_general_disposal_rule(
+        database,
+        material.id,
+        country_code,
+    )
+
+    if general_rule is None:
+        return None
+
+    return general_disposal_guidance_response(material, general_rule)
+
+
 @app.get("/health")
 def health() -> dict[str, str]:
     return {"status": "ok"}
@@ -305,34 +333,15 @@ def classify_uploaded_image(
 
     if top_material is not None:
         try:
-            jurisdiction_rule = None
-
-            if jurisdiction_id is not None:
-                jurisdiction_rule = get_disposal_rule(
-                    database,
-                    jurisdiction_id,
-                    top_material.key,
-                )
-
-            if jurisdiction_rule is not None:
-                disposal_guidance = jurisdiction_disposal_guidance_response(
-                    jurisdiction_rule
-                )
-            else:
-                country_code = (
-                    jurisdiction.country_code if jurisdiction is not None else "US"
-                )
-                general_rule = get_general_disposal_rule(
-                    database,
-                    top_material.id,
-                    country_code,
-                )
-
-                if general_rule is not None:
-                    disposal_guidance = general_disposal_guidance_response(
-                        top_material,
-                        general_rule,
-                    )
+            country_code = (
+                jurisdiction.country_code if jurisdiction is not None else "US"
+            )
+            disposal_guidance = material_disposal_guidance(
+                database,
+                top_material,
+                jurisdiction_id,
+                country_code,
+            )
         except SQLAlchemyError as error:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -374,7 +383,7 @@ def classify_uploaded_image(
                 float(prediction["score"]),
                 materials_by_label,
             )
-            for prediction in predictions[1:5]
+            for prediction in predictions[1:]
         ],
         disposal_guidance=disposal_guidance,
         jurisdiction_id=scan.jurisdiction_id,
@@ -390,7 +399,13 @@ def confirm_scan_prediction(
     confirmation: ScanConfirmationRequest,
     database: DatabaseSession,
 ) -> ScanConfirmationResponse:
-    scan = database.get(Scan, scan_id)
+    try:
+        scan = database.get(Scan, scan_id)
+    except SQLAlchemyError as error:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="The scan could not be loaded.",
+        ) from error
 
     if scan is None:
         raise HTTPException(
@@ -399,17 +414,58 @@ def confirm_scan_prediction(
         )
 
     confirmed_label = confirmation.confirmed_label.strip()
-    prediction_labels = {
-        str(prediction["label"])
-        for prediction in scan.predictions
-        if isinstance(prediction, dict) and "label" in prediction
-    }
+    confirmed_prediction_data = next(
+        (
+            prediction
+            for prediction in scan.predictions
+            if isinstance(prediction, dict)
+            and str(prediction.get("label")) == confirmed_label
+        ),
+        None,
+    )
 
-    if confirmed_label not in prediction_labels:
+    if confirmed_prediction_data is None:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail="The confirmed label must be one of the scan predictions.",
         )
+
+    prediction_score = confirmed_prediction_data.get("score")
+
+    if not isinstance(prediction_score, (int, float)):
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="The saved scan prediction is invalid.",
+        )
+
+    try:
+        materials_by_label = resolve_material_aliases(database, [confirmed_label])
+        confirmed_material = materials_by_label.get(confirmed_label)
+        disposal_guidance = None
+
+        if confirmed_material is not None:
+            jurisdiction = (
+                get_jurisdiction(database, scan.jurisdiction_id)
+                if scan.jurisdiction_id is not None
+                else None
+            )
+            active_jurisdiction_id = (
+                scan.jurisdiction_id if jurisdiction is not None else None
+            )
+            country_code = (
+                jurisdiction.country_code if jurisdiction is not None else "US"
+            )
+            disposal_guidance = material_disposal_guidance(
+                database,
+                confirmed_material,
+                active_jurisdiction_id,
+                country_code,
+            )
+    except SQLAlchemyError as error:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="The corrected material could not be loaded.",
+        ) from error
 
     scan.confirmed_label = confirmed_label
 
@@ -426,4 +482,10 @@ def confirm_scan_prediction(
     return ScanConfirmationResponse(
         scan_id=scan.id,
         confirmed_label=scan.confirmed_label,
+        confirmed_prediction=prediction_response(
+            confirmed_label,
+            float(prediction_score),
+            materials_by_label,
+        ),
+        disposal_guidance=disposal_guidance,
     )

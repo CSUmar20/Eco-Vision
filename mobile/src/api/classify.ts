@@ -62,6 +62,8 @@ export type ScanResult = {
 export type ScanConfirmation = {
   scan_id: string;
   confirmed_label: string;
+  confirmed_prediction: Prediction;
+  disposal_guidance: DisposalGuidance | null;
 };
 
 type ApiErrorBody = {

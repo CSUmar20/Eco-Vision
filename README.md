@@ -247,7 +247,7 @@ Successful responses contain:
 - Scan ID and creation time
 - Model identifier
 - Top prediction, confidence, and canonical material mapping
-- Up to four alternative predictions with canonical material mappings
+- All alternative classifier predictions with canonical material mappings
 - Source-backed disposal guidance for the top material
 
 When a selected jurisdiction has a rule for the detected material, the response uses that rule and
@@ -258,7 +258,9 @@ has no material mapping or no sourced rule is available.
 ### `PATCH /scans/{scan_id}/confirmation`
 
 Accepts one of the labels returned for the referenced scan and saves it as anonymous model
-feedback. Labels that were not part of that scan's predictions are rejected.
+feedback. The response includes the corrected canonical material and its applicable disposal
+guidance so the client can update the result immediately. Labels that were not part of that
+scan's predictions are rejected.
 
 ## Quality checks
 

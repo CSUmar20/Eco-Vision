@@ -54,6 +54,25 @@ GENERAL_GUIDANCE = GeneralDisposalRule(
     verified_at=datetime(2026, 10, 16, tzinfo=UTC),
 )
 
+PAPER_GUIDANCE = GeneralDisposalRule(
+    id=uuid4(),
+    material_id=MATERIALS_BY_LABEL["a sheet of paper"].id,
+    country_code="US",
+    action="recycle",
+    headline="Recycle it",
+    instructions="Place clean, dry paper loose in recycling.",
+    preparation="Keep food, liquids, and non-paper packaging out of recycling.",
+    warning=None,
+    source_title="US EPA: How Do I Recycle Common Recyclables",
+    source_url="https://www.epa.gov/recycle/how-do-i-recycle-common-recyclables",
+    verified_at=datetime(2026, 10, 16, tzinfo=UTC),
+)
+
+GENERAL_GUIDANCE_BY_MATERIAL_ID = {
+    GENERAL_GUIDANCE.material_id: GENERAL_GUIDANCE,
+    PAPER_GUIDANCE.material_id: PAPER_GUIDANCE,
+}
+
 
 class ClassifierStub:
     def __init__(self) -> None:
@@ -125,7 +144,9 @@ def api_context(
     monkeypatch.setattr(
         main,
         "get_general_disposal_rule",
-        lambda session, material_id, country_code: GENERAL_GUIDANCE,
+        lambda session, material_id, country_code: GENERAL_GUIDANCE_BY_MATERIAL_ID.get(
+            material_id
+        ),
     )
     monkeypatch.setattr(
         main,
@@ -442,7 +463,7 @@ def test_guidance_database_failure_returns_500_before_scan_is_saved(
     assert not database.commit_called
 
 
-def test_scan_prediction_can_be_confirmed(
+def test_scan_prediction_can_be_corrected(
     api_context: tuple[TestClient, FakeDatabaseSession, ClassifierStub],
     png_image_bytes: bytes,
 ) -> None:
@@ -459,6 +480,28 @@ def test_scan_prediction_can_be_confirmed(
     assert response.json() == {
         "scan_id": scan_response.json()["scan_id"],
         "confirmed_label": confirmed_label,
+        "confirmed_prediction": {
+            **PREDICTIONS[1],
+            "material_key": "paper_sheet",
+            "material_display_name": "Paper",
+        },
+        "disposal_guidance": {
+            "scope": "general",
+            "material_key": "paper_sheet",
+            "country_code": "US",
+            "action": "recycle",
+            "headline": "Recycle it",
+            "instructions": "Place clean, dry paper loose in recycling.",
+            "preparation": (
+                "Keep food, liquids, and non-paper packaging out of recycling."
+            ),
+            "warning": None,
+            "source_title": "US EPA: How Do I Recycle Common Recyclables",
+            "source_url": (
+                "https://www.epa.gov/recycle/how-do-i-recycle-common-recyclables"
+            ),
+            "verified_at": "2026-10-16T00:00:00Z",
+        },
     }
     assert database.added_scan is not None
     assert database.added_scan.confirmed_label == confirmed_label
