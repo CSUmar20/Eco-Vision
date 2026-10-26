@@ -66,6 +66,7 @@ backend/
   migrations/          Alembic database migrations
   tests/               Isolated API and classifier tests
   .env.example         Backend environment template
+  Dockerfile           Production API container
 
 mobile/
   src/app/             Expo Router screens
@@ -186,6 +187,43 @@ Do not open the mobile app until this health check succeeds. If `curl` cannot co
 the simulator will also report that it cannot reach the EcoVision API.
 
 Interactive API documentation is available at `http://127.0.0.1:8000/docs`.
+
+### Production container
+
+Build the backend image from the repository root:
+
+```bash
+docker build --tag ecovision-api:local backend
+```
+
+The image installs the official CPU-only PyTorch build, then starts one Uvicorn process as a
+non-root user. It listens on port `8000` by default and uses a platform-provided `PORT` value when
+present. For example, when the supplied environment file contains a database URL that is
+reachable from the container:
+
+```bash
+docker run --rm \
+  --env-file backend/.env \
+  --publish 8000:8000 \
+  ecovision-api:local
+```
+
+The normal local `backend/.env` points to `127.0.0.1`, which means the container itself and will not
+reach PostgreSQL on the Mac. Use an ignored, container-specific environment file with
+`host.docker.internal` for that local test. A production host should inject `DATABASE_URL` through
+its secret manager rather than copy an environment file into the image.
+
+Database migrations and catalog seeding are release commands, not part of API startup. Run them
+once per deployment before routing traffic to new replicas:
+
+```bash
+docker run --rm --env-file backend/.env ecovision-api:local alembic upgrade head
+docker run --rm --env-file backend/.env ecovision-api:local python -m app.seed_materials
+```
+
+When the API is behind a trusted reverse proxy, set `FORWARDED_ALLOW_IPS` to only the proxy IPs or
+networks supplied by the hosting provider. Do not trust forwarded headers from arbitrary public
+clients.
 
 ### 5. Expo
 
