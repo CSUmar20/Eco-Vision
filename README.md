@@ -63,6 +63,7 @@ Repository layout:
 ```text
 backend/
   app/                 FastAPI application, database model, and classifier
+  evaluation/          Real-image classifier dataset, runner, and results
   migrations/          Alembic database migrations
   tests/               Isolated API and classifier tests
   .env.example         Backend environment template
@@ -187,6 +188,21 @@ Do not open the mobile app until this health check succeeds. If `curl` cannot co
 the simulator will also report that it cannot reach the EcoVision API.
 
 Interactive API documentation is available at `http://127.0.0.1:8000/docs`.
+
+### Classifier evaluation
+
+The backend includes a versioned set of 30 human-labeled household-item photographs from
+Wikimedia Commons. The manifest records the exact image URL, checksum, author, license, source
+page, and expected classifier label. Run the production classifier against that set from
+`backend/`:
+
+```bash
+python -m evaluation.evaluate
+```
+
+The command downloads images to an ignored local cache, verifies every checksum, and writes a
+JSON result plus a Markdown accuracy, confusion, and failure report under `evaluation/results/`.
+Use `--offline` after the first run to guarantee that evaluation performs no network requests.
 
 ### Production container
 

@@ -4,7 +4,6 @@ from typing import Any
 from urllib import request as urllib_request
 
 from PIL import Image, ImageOps, UnidentifiedImageError
-from transformers import pipeline
 
 from app.config import settings
 
@@ -40,6 +39,8 @@ CANDIDATE_LABELS = [
 
 @lru_cache(maxsize=1)
 def get_classifier() -> Any:
+    from transformers import pipeline
+
     return pipeline(
         task="zero-shot-image-classification",
         model=settings.hf_model,

@@ -1,0 +1,1332 @@
+{
+  "generated_at": "2026-10-28T19:00:16.687424+00:00",
+  "model": "openai/clip-vit-base-patch32",
+  "hypothesis_template": "This is a photo of {}.",
+  "candidate_labels": [
+    "an aluminum beverage can",
+    "a metal food can",
+    "a clear glass bottle or jar",
+    "a cardboard box",
+    "a sheet of paper",
+    "a clear plastic beverage bottle",
+    "an opaque plastic jug or container",
+    "a plastic bag or plastic film",
+    "a polystyrene foam container",
+    "food waste",
+    "a household battery",
+    "an electronic device",
+    "clothing or textile",
+    "mixed-material packaging",
+    "adhesive tape",
+    "aluminum foil or tray",
+    "a pizza box",
+    "a disposable paper cup or takeout container",
+    "a food or beverage carton",
+    "a ceramic dish or drinking glass",
+    "a plastic utensil or straw",
+    "yard trimmings",
+    "a CFL or fluorescent light bulb",
+    "a paint or solvent container",
+    "a needle or medical sharp",
+    "another type of household object"
+  ],
+  "dataset": {
+    "name": "EcoVision real household items",
+    "version": "1.0.0",
+    "sample_count": 30,
+    "manifest_sha256": "361b296002fe82f84efa924f050bcd46a572c317a4997af9e6bcc1fa38bcc041"
+  },
+  "metrics": {
+    "sample_count": 30,
+    "correct_count": 21,
+    "incorrect_count": 9,
+    "top_1_accuracy": 0.7,
+    "confusions": [
+      {
+        "expected_label": "a clear plastic beverage bottle",
+        "predicted_label": "a clear glass bottle or jar",
+        "count": 1
+      },
+      {
+        "expected_label": "a polystyrene foam container",
+        "predicted_label": "a disposable paper cup or takeout container",
+        "count": 1
+      },
+      {
+        "expected_label": "aluminum foil or tray",
+        "predicted_label": "a clear plastic beverage bottle",
+        "count": 1
+      },
+      {
+        "expected_label": "an aluminum beverage can",
+        "predicted_label": "mixed-material packaging",
+        "count": 1
+      },
+      {
+        "expected_label": "an electronic device",
+        "predicted_label": "a household battery",
+        "count": 1
+      },
+      {
+        "expected_label": "an opaque plastic jug or container",
+        "predicted_label": "a disposable paper cup or takeout container",
+        "count": 1
+      },
+      {
+        "expected_label": "another type of household object",
+        "predicted_label": "a clear glass bottle or jar",
+        "count": 1
+      },
+      {
+        "expected_label": "mixed-material packaging",
+        "predicted_label": "a food or beverage carton",
+        "count": 1
+      },
+      {
+        "expected_label": "yard trimmings",
+        "predicted_label": "a polystyrene foam container",
+        "count": 1
+      }
+    ],
+    "per_label": [
+      {
+        "label": "an aluminum beverage can",
+        "support": 2,
+        "correct": 1,
+        "accuracy": 0.5
+      },
+      {
+        "label": "a metal food can",
+        "support": 2,
+        "correct": 2,
+        "accuracy": 1.0
+      },
+      {
+        "label": "a clear glass bottle or jar",
+        "support": 1,
+        "correct": 1,
+        "accuracy": 1.0
+      },
+      {
+        "label": "a cardboard box",
+        "support": 1,
+        "correct": 1,
+        "accuracy": 1.0
+      },
+      {
+        "label": "a sheet of paper",
+        "support": 1,
+        "correct": 1,
+        "accuracy": 1.0
+      },
+      {
+        "label": "a clear plastic beverage bottle",
+        "support": 2,
+        "correct": 1,
+        "accuracy": 0.5
+      },
+      {
+        "label": "an opaque plastic jug or container",
+        "support": 1,
+        "correct": 0,
+        "accuracy": 0.0
+      },
+      {
+        "label": "a plastic bag or plastic film",
+        "support": 1,
+        "correct": 1,
+        "accuracy": 1.0
+      },
+      {
+        "label": "a polystyrene foam container",
+        "support": 1,
+        "correct": 0,
+        "accuracy": 0.0
+      },
+      {
+        "label": "food waste",
+        "support": 1,
+        "correct": 1,
+        "accuracy": 1.0
+      },
+      {
+        "label": "a household battery",
+        "support": 1,
+        "correct": 1,
+        "accuracy": 1.0
+      },
+      {
+        "label": "an electronic device",
+        "support": 2,
+        "correct": 1,
+        "accuracy": 0.5
+      },
+      {
+        "label": "clothing or textile",
+        "support": 1,
+        "correct": 1,
+        "accuracy": 1.0
+      },
+      {
+        "label": "mixed-material packaging",
+        "support": 1,
+        "correct": 0,
+        "accuracy": 0.0
+      },
+      {
+        "label": "adhesive tape",
+        "support": 1,
+        "correct": 1,
+        "accuracy": 1.0
+      },
+      {
+        "label": "aluminum foil or tray",
+        "support": 1,
+        "correct": 0,
+        "accuracy": 0.0
+      },
+      {
+        "label": "a pizza box",
+        "support": 1,
+        "correct": 1,
+        "accuracy": 1.0
+      },
+      {
+        "label": "a disposable paper cup or takeout container",
+        "support": 1,
+        "correct": 1,
+        "accuracy": 1.0
+      },
+      {
+        "label": "a food or beverage carton",
+        "support": 1,
+        "correct": 1,
+        "accuracy": 1.0
+      },
+      {
+        "label": "a ceramic dish or drinking glass",
+        "support": 1,
+        "correct": 1,
+        "accuracy": 1.0
+      },
+      {
+        "label": "a plastic utensil or straw",
+        "support": 1,
+        "correct": 1,
+        "accuracy": 1.0
+      },
+      {
+        "label": "yard trimmings",
+        "support": 1,
+        "correct": 0,
+        "accuracy": 0.0
+      },
+      {
+        "label": "a CFL or fluorescent light bulb",
+        "support": 1,
+        "correct": 1,
+        "accuracy": 1.0
+      },
+      {
+        "label": "a paint or solvent container",
+        "support": 1,
+        "correct": 1,
+        "accuracy": 1.0
+      },
+      {
+        "label": "a needle or medical sharp",
+        "support": 1,
+        "correct": 1,
+        "accuracy": 1.0
+      },
+      {
+        "label": "another type of household object",
+        "support": 1,
+        "correct": 0,
+        "accuracy": 0.0
+      }
+    ],
+    "predicted_label_counts": [
+      {
+        "label": "a clear glass bottle or jar",
+        "count": 3
+      },
+      {
+        "label": "a disposable paper cup or takeout container",
+        "count": 3
+      },
+      {
+        "label": "a clear plastic beverage bottle",
+        "count": 2
+      },
+      {
+        "label": "a food or beverage carton",
+        "count": 2
+      },
+      {
+        "label": "a household battery",
+        "count": 2
+      },
+      {
+        "label": "a metal food can",
+        "count": 2
+      },
+      {
+        "label": "a CFL or fluorescent light bulb",
+        "count": 1
+      },
+      {
+        "label": "a cardboard box",
+        "count": 1
+      },
+      {
+        "label": "a ceramic dish or drinking glass",
+        "count": 1
+      },
+      {
+        "label": "a needle or medical sharp",
+        "count": 1
+      },
+      {
+        "label": "a paint or solvent container",
+        "count": 1
+      },
+      {
+        "label": "a pizza box",
+        "count": 1
+      },
+      {
+        "label": "a plastic bag or plastic film",
+        "count": 1
+      },
+      {
+        "label": "a plastic utensil or straw",
+        "count": 1
+      },
+      {
+        "label": "a polystyrene foam container",
+        "count": 1
+      },
+      {
+        "label": "a sheet of paper",
+        "count": 1
+      },
+      {
+        "label": "adhesive tape",
+        "count": 1
+      },
+      {
+        "label": "an aluminum beverage can",
+        "count": 1
+      },
+      {
+        "label": "an electronic device",
+        "count": 1
+      },
+      {
+        "label": "clothing or textile",
+        "count": 1
+      },
+      {
+        "label": "food waste",
+        "count": 1
+      },
+      {
+        "label": "mixed-material packaging",
+        "count": 1
+      }
+    ],
+    "incorrect_destination_counts": [
+      {
+        "label": "a clear glass bottle or jar",
+        "count": 2
+      },
+      {
+        "label": "a disposable paper cup or takeout container",
+        "count": 2
+      },
+      {
+        "label": "a clear plastic beverage bottle",
+        "count": 1
+      },
+      {
+        "label": "a food or beverage carton",
+        "count": 1
+      },
+      {
+        "label": "a household battery",
+        "count": 1
+      },
+      {
+        "label": "a polystyrene foam container",
+        "count": 1
+      },
+      {
+        "label": "mixed-material packaging",
+        "count": 1
+      }
+    ]
+  },
+  "samples": [
+    {
+      "id": "aluminum_can_01",
+      "expected_label": "an aluminum beverage can",
+      "predicted_label": "an aluminum beverage can",
+      "top_1_score": 0.7743404507637024,
+      "correct": true,
+      "expected_rank": 1,
+      "expected_score": 0.7743404507637024,
+      "top_5": [
+        {
+          "label": "an aluminum beverage can",
+          "score": 0.7743404507637024
+        },
+        {
+          "label": "a metal food can",
+          "score": 0.22349676489830017
+        },
+        {
+          "label": "a food or beverage carton",
+          "score": 0.0010743236634880304
+        },
+        {
+          "label": "a clear plastic beverage bottle",
+          "score": 0.000557059480343014
+        },
+        {
+          "label": "a clear glass bottle or jar",
+          "score": 0.0001416581799276173
+        }
+      ],
+      "failure_context": null
+    },
+    {
+      "id": "aluminum_can_02",
+      "expected_label": "an aluminum beverage can",
+      "predicted_label": "mixed-material packaging",
+      "top_1_score": 0.22810782492160797,
+      "correct": false,
+      "expected_rank": 6,
+      "expected_score": 0.07231681793928146,
+      "top_5": [
+        {
+          "label": "mixed-material packaging",
+          "score": 0.22810782492160797
+        },
+        {
+          "label": "an opaque plastic jug or container",
+          "score": 0.18322408199310303
+        },
+        {
+          "label": "a food or beverage carton",
+          "score": 0.146872416138649
+        },
+        {
+          "label": "a clear glass bottle or jar",
+          "score": 0.1078142374753952
+        },
+        {
+          "label": "a paint or solvent container",
+          "score": 0.07413957267999649
+        }
+      ],
+      "failure_context": "The can is heavily crushed, so its normal cylindrical silhouette is absent."
+    },
+    {
+      "id": "metal_food_can_01",
+      "expected_label": "a metal food can",
+      "predicted_label": "a metal food can",
+      "top_1_score": 0.31129249930381775,
+      "correct": true,
+      "expected_rank": 1,
+      "expected_score": 0.31129249930381775,
+      "top_5": [
+        {
+          "label": "a metal food can",
+          "score": 0.31129249930381775
+        },
+        {
+          "label": "a disposable paper cup or takeout container",
+          "score": 0.30547425150871277
+        },
+        {
+          "label": "a paint or solvent container",
+          "score": 0.18569909036159515
+        },
+        {
+          "label": "a polystyrene foam container",
+          "score": 0.08527079969644547
+        },
+        {
+          "label": "mixed-material packaging",
+          "score": 0.04591354355216026
+        }
+      ],
+      "failure_context": null
+    },
+    {
+      "id": "metal_food_can_02",
+      "expected_label": "a metal food can",
+      "predicted_label": "a metal food can",
+      "top_1_score": 0.983535647392273,
+      "correct": true,
+      "expected_rank": 1,
+      "expected_score": 0.983535647392273,
+      "top_5": [
+        {
+          "label": "a metal food can",
+          "score": 0.983535647392273
+        },
+        {
+          "label": "a paint or solvent container",
+          "score": 0.006370655260980129
+        },
+        {
+          "label": "an aluminum beverage can",
+          "score": 0.0037580307107418776
+        },
+        {
+          "label": "a food or beverage carton",
+          "score": 0.002148604718968272
+        },
+        {
+          "label": "mixed-material packaging",
+          "score": 0.0014064231654629111
+        }
+      ],
+      "failure_context": null
+    },
+    {
+      "id": "glass_bottle_01",
+      "expected_label": "a clear glass bottle or jar",
+      "predicted_label": "a clear glass bottle or jar",
+      "top_1_score": 0.8207043409347534,
+      "correct": true,
+      "expected_rank": 1,
+      "expected_score": 0.8207043409347534,
+      "top_5": [
+        {
+          "label": "a clear glass bottle or jar",
+          "score": 0.8207043409347534
+        },
+        {
+          "label": "a clear plastic beverage bottle",
+          "score": 0.17632295191287994
+        },
+        {
+          "label": "another type of household object",
+          "score": 0.0012270916486158967
+        },
+        {
+          "label": "an opaque plastic jug or container",
+          "score": 0.000689468695782125
+        },
+        {
+          "label": "a ceramic dish or drinking glass",
+          "score": 0.00048086242168210447
+        }
+      ],
+      "failure_context": null
+    },
+    {
+      "id": "cardboard_box_01",
+      "expected_label": "a cardboard box",
+      "predicted_label": "a cardboard box",
+      "top_1_score": 0.732937216758728,
+      "correct": true,
+      "expected_rank": 1,
+      "expected_score": 0.732937216758728,
+      "top_5": [
+        {
+          "label": "a cardboard box",
+          "score": 0.732937216758728
+        },
+        {
+          "label": "mixed-material packaging",
+          "score": 0.0910501629114151
+        },
+        {
+          "label": "a disposable paper cup or takeout container",
+          "score": 0.0732390433549881
+        },
+        {
+          "label": "a food or beverage carton",
+          "score": 0.06783407926559448
+        },
+        {
+          "label": "a polystyrene foam container",
+          "score": 0.019851548597216606
+        }
+      ],
+      "failure_context": null
+    },
+    {
+      "id": "paper_01",
+      "expected_label": "a sheet of paper",
+      "predicted_label": "a sheet of paper",
+      "top_1_score": 0.9959176182746887,
+      "correct": true,
+      "expected_rank": 1,
+      "expected_score": 0.9959176182746887,
+      "top_5": [
+        {
+          "label": "a sheet of paper",
+          "score": 0.9959176182746887
+        },
+        {
+          "label": "an electronic device",
+          "score": 0.0010683214059099555
+        },
+        {
+          "label": "a food or beverage carton",
+          "score": 0.0005230121896602213
+        },
+        {
+          "label": "clothing or textile",
+          "score": 0.0005090940976515412
+        },
+        {
+          "label": "a cardboard box",
+          "score": 0.00034924683859571815
+        }
+      ],
+      "failure_context": null
+    },
+    {
+      "id": "plastic_bottle_01",
+      "expected_label": "a clear plastic beverage bottle",
+      "predicted_label": "a clear glass bottle or jar",
+      "top_1_score": 0.31877565383911133,
+      "correct": false,
+      "expected_rank": 2,
+      "expected_score": 0.2771848738193512,
+      "top_5": [
+        {
+          "label": "a clear glass bottle or jar",
+          "score": 0.31877565383911133
+        },
+        {
+          "label": "a clear plastic beverage bottle",
+          "score": 0.2771848738193512
+        },
+        {
+          "label": "an opaque plastic jug or container",
+          "score": 0.26529040932655334
+        },
+        {
+          "label": "another type of household object",
+          "score": 0.04011907801032066
+        },
+        {
+          "label": "mixed-material packaging",
+          "score": 0.03900076076388359
+        }
+      ],
+      "failure_context": "The clear PET bottle has the transparency and outline of a glass bottle."
+    },
+    {
+      "id": "plastic_bottle_02",
+      "expected_label": "a clear plastic beverage bottle",
+      "predicted_label": "a clear plastic beverage bottle",
+      "top_1_score": 0.48437637090682983,
+      "correct": true,
+      "expected_rank": 1,
+      "expected_score": 0.48437637090682983,
+      "top_5": [
+        {
+          "label": "a clear plastic beverage bottle",
+          "score": 0.48437637090682983
+        },
+        {
+          "label": "a clear glass bottle or jar",
+          "score": 0.3447718918323517
+        },
+        {
+          "label": "mixed-material packaging",
+          "score": 0.067693330347538
+        },
+        {
+          "label": "an opaque plastic jug or container",
+          "score": 0.022413082420825958
+        },
+        {
+          "label": "a food or beverage carton",
+          "score": 0.01610073260962963
+        }
+      ],
+      "failure_context": null
+    },
+    {
+      "id": "plastic_jug_01",
+      "expected_label": "an opaque plastic jug or container",
+      "predicted_label": "a disposable paper cup or takeout container",
+      "top_1_score": 0.5464893579483032,
+      "correct": false,
+      "expected_rank": 3,
+      "expected_score": 0.10678492486476898,
+      "top_5": [
+        {
+          "label": "a disposable paper cup or takeout container",
+          "score": 0.5464893579483032
+        },
+        {
+          "label": "a polystyrene foam container",
+          "score": 0.3218926191329956
+        },
+        {
+          "label": "an opaque plastic jug or container",
+          "score": 0.10678492486476898
+        },
+        {
+          "label": "a paint or solvent container",
+          "score": 0.02132543921470642
+        },
+        {
+          "label": "a food or beverage carton",
+          "score": 0.0015538224251940846
+        }
+      ],
+      "failure_context": "The compact square jug resembles a lidded takeout container."
+    },
+    {
+      "id": "plastic_bag_01",
+      "expected_label": "a plastic bag or plastic film",
+      "predicted_label": "a plastic bag or plastic film",
+      "top_1_score": 0.6257545948028564,
+      "correct": true,
+      "expected_rank": 1,
+      "expected_score": 0.6257545948028564,
+      "top_5": [
+        {
+          "label": "a plastic bag or plastic film",
+          "score": 0.6257545948028564
+        },
+        {
+          "label": "mixed-material packaging",
+          "score": 0.22482630610466003
+        },
+        {
+          "label": "food waste",
+          "score": 0.0546419620513916
+        },
+        {
+          "label": "a food or beverage carton",
+          "score": 0.052713293582201004
+        },
+        {
+          "label": "a disposable paper cup or takeout container",
+          "score": 0.022222468629479408
+        }
+      ],
+      "failure_context": null
+    },
+    {
+      "id": "foam_container_01",
+      "expected_label": "a polystyrene foam container",
+      "predicted_label": "a disposable paper cup or takeout container",
+      "top_1_score": 0.802741527557373,
+      "correct": false,
+      "expected_rank": 2,
+      "expected_score": 0.17138981819152832,
+      "top_5": [
+        {
+          "label": "a disposable paper cup or takeout container",
+          "score": 0.802741527557373
+        },
+        {
+          "label": "a polystyrene foam container",
+          "score": 0.17138981819152832
+        },
+        {
+          "label": "a food or beverage carton",
+          "score": 0.012932660058140755
+        },
+        {
+          "label": "a metal food can",
+          "score": 0.0042138309217989445
+        },
+        {
+          "label": "a pizza box",
+          "score": 0.0027351079043000937
+        }
+      ],
+      "failure_context": "The closed foam clamshell is also visually a generic takeout container."
+    },
+    {
+      "id": "food_waste_01",
+      "expected_label": "food waste",
+      "predicted_label": "food waste",
+      "top_1_score": 0.9771366715431213,
+      "correct": true,
+      "expected_rank": 1,
+      "expected_score": 0.9771366715431213,
+      "top_5": [
+        {
+          "label": "food waste",
+          "score": 0.9771366715431213
+        },
+        {
+          "label": "yard trimmings",
+          "score": 0.018098626285791397
+        },
+        {
+          "label": "a plastic bag or plastic film",
+          "score": 0.0010832562111318111
+        },
+        {
+          "label": "mixed-material packaging",
+          "score": 0.0010644986759871244
+        },
+        {
+          "label": "a metal food can",
+          "score": 0.000499297515489161
+        }
+      ],
+      "failure_context": null
+    },
+    {
+      "id": "battery_01",
+      "expected_label": "a household battery",
+      "predicted_label": "a household battery",
+      "top_1_score": 0.9935342073440552,
+      "correct": true,
+      "expected_rank": 1,
+      "expected_score": 0.9935342073440552,
+      "top_5": [
+        {
+          "label": "a household battery",
+          "score": 0.9935342073440552
+        },
+        {
+          "label": "an electronic device",
+          "score": 0.0022634135093539953
+        },
+        {
+          "label": "a metal food can",
+          "score": 0.0012394726509228349
+        },
+        {
+          "label": "mixed-material packaging",
+          "score": 0.0011785357492044568
+        },
+        {
+          "label": "an aluminum beverage can",
+          "score": 0.0008148964261636138
+        }
+      ],
+      "failure_context": null
+    },
+    {
+      "id": "electronic_phone_01",
+      "expected_label": "an electronic device",
+      "predicted_label": "a household battery",
+      "top_1_score": 0.49747082591056824,
+      "correct": false,
+      "expected_rank": 2,
+      "expected_score": 0.4153100848197937,
+      "top_5": [
+        {
+          "label": "a household battery",
+          "score": 0.49747082591056824
+        },
+        {
+          "label": "an electronic device",
+          "score": 0.4153100848197937
+        },
+        {
+          "label": "another type of household object",
+          "score": 0.039522409439086914
+        },
+        {
+          "label": "a metal food can",
+          "score": 0.01192284096032381
+        },
+        {
+          "label": "aluminum foil or tray",
+          "score": 0.011522272601723671
+        }
+      ],
+      "failure_context": "The dark rectangular phone resembles a flat rechargeable battery."
+    },
+    {
+      "id": "electronic_laptop_01",
+      "expected_label": "an electronic device",
+      "predicted_label": "an electronic device",
+      "top_1_score": 0.8318526744842529,
+      "correct": true,
+      "expected_rank": 1,
+      "expected_score": 0.8318526744842529,
+      "top_5": [
+        {
+          "label": "an electronic device",
+          "score": 0.8318526744842529
+        },
+        {
+          "label": "mixed-material packaging",
+          "score": 0.04729113727807999
+        },
+        {
+          "label": "another type of household object",
+          "score": 0.0385010652244091
+        },
+        {
+          "label": "aluminum foil or tray",
+          "score": 0.022293420508503914
+        },
+        {
+          "label": "a sheet of paper",
+          "score": 0.021299690008163452
+        }
+      ],
+      "failure_context": null
+    },
+    {
+      "id": "textile_01",
+      "expected_label": "clothing or textile",
+      "predicted_label": "clothing or textile",
+      "top_1_score": 0.849301278591156,
+      "correct": true,
+      "expected_rank": 1,
+      "expected_score": 0.849301278591156,
+      "top_5": [
+        {
+          "label": "clothing or textile",
+          "score": 0.849301278591156
+        },
+        {
+          "label": "a food or beverage carton",
+          "score": 0.06258948147296906
+        },
+        {
+          "label": "mixed-material packaging",
+          "score": 0.020008845254778862
+        },
+        {
+          "label": "a plastic bag or plastic film",
+          "score": 0.01736072450876236
+        },
+        {
+          "label": "a cardboard box",
+          "score": 0.012788721360266209
+        }
+      ],
+      "failure_context": null
+    },
+    {
+      "id": "mixed_packaging_01",
+      "expected_label": "mixed-material packaging",
+      "predicted_label": "a food or beverage carton",
+      "top_1_score": 0.4062681198120117,
+      "correct": false,
+      "expected_rank": 2,
+      "expected_score": 0.31343528628349304,
+      "top_5": [
+        {
+          "label": "a food or beverage carton",
+          "score": 0.4062681198120117
+        },
+        {
+          "label": "mixed-material packaging",
+          "score": 0.31343528628349304
+        },
+        {
+          "label": "a metal food can",
+          "score": 0.1245495080947876
+        },
+        {
+          "label": "food waste",
+          "score": 0.058167777955532074
+        },
+        {
+          "label": "a disposable paper cup or takeout container",
+          "score": 0.030189942568540573
+        }
+      ],
+      "failure_context": "The opened chip bag exposes food and reflective layers instead of a clean package silhouette."
+    },
+    {
+      "id": "tape_01",
+      "expected_label": "adhesive tape",
+      "predicted_label": "adhesive tape",
+      "top_1_score": 0.8690796494483948,
+      "correct": true,
+      "expected_rank": 1,
+      "expected_score": 0.8690796494483948,
+      "top_5": [
+        {
+          "label": "adhesive tape",
+          "score": 0.8690796494483948
+        },
+        {
+          "label": "an aluminum beverage can",
+          "score": 0.04609266668558121
+        },
+        {
+          "label": "mixed-material packaging",
+          "score": 0.042152039706707
+        },
+        {
+          "label": "aluminum foil or tray",
+          "score": 0.007899902760982513
+        },
+        {
+          "label": "a disposable paper cup or takeout container",
+          "score": 0.0073077064007520676
+        }
+      ],
+      "failure_context": null
+    },
+    {
+      "id": "foil_tray_01",
+      "expected_label": "aluminum foil or tray",
+      "predicted_label": "a clear plastic beverage bottle",
+      "top_1_score": 0.1806802600622177,
+      "correct": false,
+      "expected_rank": 7,
+      "expected_score": 0.03381974995136261,
+      "top_5": [
+        {
+          "label": "a clear plastic beverage bottle",
+          "score": 0.1806802600622177
+        },
+        {
+          "label": "an aluminum beverage can",
+          "score": 0.1788448989391327
+        },
+        {
+          "label": "a clear glass bottle or jar",
+          "score": 0.13510610163211823
+        },
+        {
+          "label": "a disposable paper cup or takeout container",
+          "score": 0.12476292252540588
+        },
+        {
+          "label": "a plastic bag or plastic film",
+          "score": 0.09896741807460785
+        }
+      ],
+      "failure_context": "The image contains a pile of crushed tray fragments rather than one intact tray."
+    },
+    {
+      "id": "pizza_box_01",
+      "expected_label": "a pizza box",
+      "predicted_label": "a pizza box",
+      "top_1_score": 0.9940998554229736,
+      "correct": true,
+      "expected_rank": 1,
+      "expected_score": 0.9940998554229736,
+      "top_5": [
+        {
+          "label": "a pizza box",
+          "score": 0.9940998554229736
+        },
+        {
+          "label": "a cardboard box",
+          "score": 0.0039273956790566444
+        },
+        {
+          "label": "a food or beverage carton",
+          "score": 0.0017681338358670473
+        },
+        {
+          "label": "mixed-material packaging",
+          "score": 5.460479951580055e-05
+        },
+        {
+          "label": "a disposable paper cup or takeout container",
+          "score": 3.944937270716764e-05
+        }
+      ],
+      "failure_context": null
+    },
+    {
+      "id": "paper_cup_01",
+      "expected_label": "a disposable paper cup or takeout container",
+      "predicted_label": "a disposable paper cup or takeout container",
+      "top_1_score": 0.825948178768158,
+      "correct": true,
+      "expected_rank": 1,
+      "expected_score": 0.825948178768158,
+      "top_5": [
+        {
+          "label": "a disposable paper cup or takeout container",
+          "score": 0.825948178768158
+        },
+        {
+          "label": "a polystyrene foam container",
+          "score": 0.07071729749441147
+        },
+        {
+          "label": "an opaque plastic jug or container",
+          "score": 0.047569893300533295
+        },
+        {
+          "label": "a food or beverage carton",
+          "score": 0.014771922491490841
+        },
+        {
+          "label": "another type of household object",
+          "score": 0.010092077776789665
+        }
+      ],
+      "failure_context": null
+    },
+    {
+      "id": "carton_01",
+      "expected_label": "a food or beverage carton",
+      "predicted_label": "a food or beverage carton",
+      "top_1_score": 0.6174295544624329,
+      "correct": true,
+      "expected_rank": 1,
+      "expected_score": 0.6174295544624329,
+      "top_5": [
+        {
+          "label": "a food or beverage carton",
+          "score": 0.6174295544624329
+        },
+        {
+          "label": "another type of household object",
+          "score": 0.1579664945602417
+        },
+        {
+          "label": "mixed-material packaging",
+          "score": 0.13084422051906586
+        },
+        {
+          "label": "an opaque plastic jug or container",
+          "score": 0.03529081493616104
+        },
+        {
+          "label": "a ceramic dish or drinking glass",
+          "score": 0.012015548534691334
+        }
+      ],
+      "failure_context": null
+    },
+    {
+      "id": "ceramic_01",
+      "expected_label": "a ceramic dish or drinking glass",
+      "predicted_label": "a ceramic dish or drinking glass",
+      "top_1_score": 0.8243755102157593,
+      "correct": true,
+      "expected_rank": 1,
+      "expected_score": 0.8243755102157593,
+      "top_5": [
+        {
+          "label": "a ceramic dish or drinking glass",
+          "score": 0.8243755102157593
+        },
+        {
+          "label": "another type of household object",
+          "score": 0.07237839698791504
+        },
+        {
+          "label": "a pizza box",
+          "score": 0.017606141045689583
+        },
+        {
+          "label": "clothing or textile",
+          "score": 0.014477087184786797
+        },
+        {
+          "label": "a paint or solvent container",
+          "score": 0.013133980333805084
+        }
+      ],
+      "failure_context": null
+    },
+    {
+      "id": "plastic_utensil_01",
+      "expected_label": "a plastic utensil or straw",
+      "predicted_label": "a plastic utensil or straw",
+      "top_1_score": 0.9840065836906433,
+      "correct": true,
+      "expected_rank": 1,
+      "expected_score": 0.9840065836906433,
+      "top_5": [
+        {
+          "label": "a plastic utensil or straw",
+          "score": 0.9840065836906433
+        },
+        {
+          "label": "another type of household object",
+          "score": 0.006964786443859339
+        },
+        {
+          "label": "an opaque plastic jug or container",
+          "score": 0.001942461938597262
+        },
+        {
+          "label": "a CFL or fluorescent light bulb",
+          "score": 0.0017611854709684849
+        },
+        {
+          "label": "a food or beverage carton",
+          "score": 0.0014575475361198187
+        }
+      ],
+      "failure_context": null
+    },
+    {
+      "id": "yard_trimmings_01",
+      "expected_label": "yard trimmings",
+      "predicted_label": "a polystyrene foam container",
+      "top_1_score": 0.6279828548431396,
+      "correct": false,
+      "expected_rank": 4,
+      "expected_score": 0.04576628655195236,
+      "top_5": [
+        {
+          "label": "a polystyrene foam container",
+          "score": 0.6279828548431396
+        },
+        {
+          "label": "a household battery",
+          "score": 0.14117135107517242
+        },
+        {
+          "label": "another type of household object",
+          "score": 0.06313513219356537
+        },
+        {
+          "label": "yard trimmings",
+          "score": 0.04576628655195236
+        },
+        {
+          "label": "a cardboard box",
+          "score": 0.0399739146232605
+        }
+      ],
+      "failure_context": "The grass clippings sit inside a concrete drain whose rectangular shape dominates the frame."
+    },
+    {
+      "id": "cfl_01",
+      "expected_label": "a CFL or fluorescent light bulb",
+      "predicted_label": "a CFL or fluorescent light bulb",
+      "top_1_score": 0.9978716373443604,
+      "correct": true,
+      "expected_rank": 1,
+      "expected_score": 0.9978716373443604,
+      "top_5": [
+        {
+          "label": "a CFL or fluorescent light bulb",
+          "score": 0.9978716373443604
+        },
+        {
+          "label": "another type of household object",
+          "score": 0.0016108056297525764
+        },
+        {
+          "label": "an electronic device",
+          "score": 0.00021523685427382588
+        },
+        {
+          "label": "a polystyrene foam container",
+          "score": 5.929799226578325e-05
+        },
+        {
+          "label": "a plastic utensil or straw",
+          "score": 5.820732985739596e-05
+        }
+      ],
+      "failure_context": null
+    },
+    {
+      "id": "paint_can_01",
+      "expected_label": "a paint or solvent container",
+      "predicted_label": "a paint or solvent container",
+      "top_1_score": 0.8559014797210693,
+      "correct": true,
+      "expected_rank": 1,
+      "expected_score": 0.8559014797210693,
+      "top_5": [
+        {
+          "label": "a paint or solvent container",
+          "score": 0.8559014797210693
+        },
+        {
+          "label": "a metal food can",
+          "score": 0.06672314554452896
+        },
+        {
+          "label": "an aluminum beverage can",
+          "score": 0.035684436559677124
+        },
+        {
+          "label": "a household battery",
+          "score": 0.011980749666690826
+        },
+        {
+          "label": "a polystyrene foam container",
+          "score": 0.008746415376663208
+        }
+      ],
+      "failure_context": null
+    },
+    {
+      "id": "sharp_01",
+      "expected_label": "a needle or medical sharp",
+      "predicted_label": "a needle or medical sharp",
+      "top_1_score": 0.7700698971748352,
+      "correct": true,
+      "expected_rank": 1,
+      "expected_score": 0.7700698971748352,
+      "top_5": [
+        {
+          "label": "a needle or medical sharp",
+          "score": 0.7700698971748352
+        },
+        {
+          "label": "mixed-material packaging",
+          "score": 0.19466406106948853
+        },
+        {
+          "label": "a plastic utensil or straw",
+          "score": 0.008147121407091618
+        },
+        {
+          "label": "another type of household object",
+          "score": 0.007484122179448605
+        },
+        {
+          "label": "a disposable paper cup or takeout container",
+          "score": 0.006620796397328377
+        }
+      ],
+      "failure_context": null
+    },
+    {
+      "id": "other_toothbrush_01",
+      "expected_label": "another type of household object",
+      "predicted_label": "a clear glass bottle or jar",
+      "top_1_score": 0.4725220203399658,
+      "correct": false,
+      "expected_rank": 5,
+      "expected_score": 0.025821827352046967,
+      "top_5": [
+        {
+          "label": "a clear glass bottle or jar",
+          "score": 0.4725220203399658
+        },
+        {
+          "label": "a needle or medical sharp",
+          "score": 0.23933738470077515
+        },
+        {
+          "label": "a clear plastic beverage bottle",
+          "score": 0.1579565852880478
+        },
+        {
+          "label": "a plastic utensil or straw",
+          "score": 0.05761697515845299
+        },
+        {
+          "label": "another type of household object",
+          "score": 0.025821827352046967
+        }
+      ],
+      "failure_context": "The translucent, elongated toothbrush overlaps visually with bottles, straws, and medical sharps."
+    }
+  ]
+}

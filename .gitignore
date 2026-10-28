@@ -9,6 +9,7 @@ __pycache__/
 *.py[cod]
 .pytest_cache/
 .ruff_cache/
+backend/evaluation/.cache/
 
 # Expo and Node
 mobile/node_modules/
