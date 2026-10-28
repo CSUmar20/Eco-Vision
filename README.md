@@ -17,11 +17,16 @@ The current vertical slice can:
 - Upload JPEG, PNG, or WebP images up to 10 MB.
 - Classify the image using a configurable Hugging Face zero-shot image model.
 - Display the top prediction, confidence, and alternative predictions.
+- Display source-backed general U.S. disposal guidance for a mapped material.
 - Save the scan and its predictions in PostgreSQL.
-- Let a guest confirm the top prediction or select one of the returned alternatives.
+- Let a guest confirm the top prediction or select one of the returned alternatives, then refresh
+  the disposal guidance for the corrected material.
 - Preserve the selected image and allow the user to retry after an error.
 
-The MVP does **not** yet determine whether the item is accepted by a local recycling program. API responses explicitly report `local_rules_not_checked` until verified local-rule data is implemented.
+The implemented guidance is country-level and may recommend recycling, trash, donation, composting,
+special drop-off, or checking locally. It does **not** determine whether a municipality, county, or
+waste provider accepts the item. Jurisdiction-specific coverage remains unavailable until verified
+local rules are curated and the mobile location flow is connected to them.
 
 ## Planned location-aware guidance
 
@@ -340,6 +345,8 @@ npx tsc --noEmit
 - Model quality has not yet been measured against a representative waste-item image set.
 - The first real classification may be slow while the Hugging Face model is loaded or downloaded.
 - Inference currently runs synchronously inside the API request.
+- General disposal guidance is U.S.-level fallback guidance, not proof that an item is accepted by
+  the user's curbside program or available local drop-off facility.
 - The jurisdiction and rule schema exists, but no production jurisdiction dataset has been curated
   and the mobile location screen is not connected to the search endpoints yet.
 - The application must not claim an item is locally accepted until an applicable rule has been verified.
