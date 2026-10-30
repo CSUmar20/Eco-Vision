@@ -332,7 +332,9 @@ Run backend checks from `backend/`:
 .venv/bin/python -m pytest -q
 ```
 
-The API tests replace the classifier and database session with deterministic fakes. They do not download or execute the Hugging Face model and do not require PostgreSQL.
+The API tests replace the classifier and database session with deterministic fakes. The test setup
+supplies a non-connecting PostgreSQL URL so application settings can be imported in a clean
+environment; the tests do not require a running PostgreSQL server or execute the Hugging Face model.
 
 Run the mobile TypeScript check from `mobile/`:
 
