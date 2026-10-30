@@ -1,5 +1,7 @@
 # EcoVision
 
+[![Quality checks](https://github.com/CSUmar20/Eco-Vision/actions/workflows/quality.yml/badge.svg)](https://github.com/CSUmar20/Eco-Vision/actions/workflows/quality.yml)
+
 EcoVision is a mobile-first application that identifies a photographed household item and is being built to provide source-backed disposal guidance for the recycling program selected by the user.
 
 The long-term product promise is:
@@ -337,6 +339,20 @@ Run the mobile TypeScript check from `mobile/`:
 ```bash
 npx tsc --noEmit
 ```
+
+These checks also run on every push and pull request through
+[`quality.yml`](.github/workflows/quality.yml). The latest local verification on October 30, 2026,
+completed with the following results:
+
+| Check | Result |
+| --- | --- |
+| Ruff | Passed |
+| pytest | 34 passed |
+| TypeScript | Passed |
+
+Pytest currently emits one dependency deprecation warning from Starlette's test client about its
+`httpx` integration. The warning does not originate in the application code and does not fail the
+test suite.
 
 ## Known limitations
 
